@@ -1,0 +1,319 @@
+import React from "react";
+import { useToken } from "./auth";
+import { useQuery, useMutation, queryCache } from "react-query";
+import parse from "parse-link-header";
+import { GraphQLClient, gql } from "graphql-request";
+
+const endpoint = "https://gitlab.com/api/graphql";
+
+function useGraphQLClient() {
+  const token = useToken();
+
+  return React.useMemo(() => {
+    return new GraphQLClient(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }, [token]);
+}
+
+function useLoadProjectMeta() {
+  const token = useToken();
+
+  return React.useCallback(async (key, projectId) => {
+    const result = await fetch(`https://gitlab.com/api/v4/projects/${projectId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return await result.json();
+  });
+}
+
+export function useGetProjectMeta(projectId) {
+  const loadProjectMeta = useLoadProjectMeta();
+  return useQuery(["project", projectId, "meta"], loadProjectMeta);
+}
+
+// async function loadLabels(key, projectId) {
+//   const result = await fetch(`https://gitlab.com/api/v4/projects/${projectId}/labels`, {
+//     headers: {
+//       Authorization: "Bearer token",
+//     },
+//   });
+
+//   return await result.json();
+// }
+
+// export function useGetLabels(projectId) {
+//   return useQuery(["project", projectId, "labels"], loadLabels);
+// }
+
+// async function loadMilestones(key, projectId) {
+//   const result = await fetch(
+//     `https://gitlab.com/api/v4/projects/${projectId}/milestones?include_parent_milestones=true`,
+//     {
+//       headers: {
+//         Authorization: "Bearer token",
+//       },
+//     }
+//   );
+
+//   return await result.json();
+// }
+
+// export function useGetMilestones(projectId) {
+//   return useQuery(["project", projectId, "milestones"], loadMilestones);
+// }
+
+// async function loadAllIssues(key, projectId) {
+//   const issueList = [];
+
+//   const timer = window.performance.now();
+
+//   let nextLink = `https://gitlab.com/api/v4/projects/${projectId}/issues?per_page=100`;
+
+//   while (nextLink) {
+//     const req = await fetch(nextLink, {
+//       headers: {
+//         Authorization: "Bearer token",
+//       },
+//     });
+
+//     const newIssues = await req.json();
+//     newIssues.forEach((item) => issueList.push(item));
+
+//     const linkHeader = req.headers.get("link");
+//     const links = parse(linkHeader);
+
+//     nextLink = links?.next?.url;
+//   }
+
+//   const ms = window.performance.now() - timer;
+
+//   console.log(`done in ${ms / 1000} seconds!`);
+//   return issueList;
+// }
+
+// export function useGetIssues(projectId) {
+//   return useQuery(["project", projectId, "issues"], loadAllIssues);
+// }
+
+function useReorderIssue() {
+  const token = useToken();
+
+  return React.useCallback(
+    async function reorderIssue({ fullPath, issue, issueAfter, issueBefore, milestoneId, labels }) {
+      function formatIssueId(id) {
+        return Number(id.slice("gid://gitlab/Issue/".length));
+      }
+      function formatMilestoneId(id) {
+        return Number(id.slice("gid://gitlab/Milestone/".length));
+      }
+
+      const projectId = encodeURIComponent(fullPath);
+      const issueIid = issue.iid;
+      const move_after_id = issueAfter ? formatIssueId(issueAfter.id) : null;
+      const move_before_id = issueBefore ? formatIssueId(issueBefore.id) : null;
+
+      if (issueBefore || issueAfter) {
+        await fetch(`https://gitlab.com/api/v4/projects/${projectId}/issues/${issueIid}/reorder`, {
+          method: "PUT",
+          body: JSON.stringify({ move_after_id, move_before_id }),
+          headers: {
+            Authorization: "Bearer token",
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      if (milestoneId || labels) {
+        // const milestone_id = milestoneBefore || milestoneAfter ? milestoneAfter?.id : undefined;
+        // const labels =
+        //   labelBefore || labelAfter
+        //     ? [
+        //         ...issue.labels.filter((l) => l.id !== labelBefore.id).map((l) => l.title),
+        //         ...(labelAfter ? [labelAfter.title] : []),
+        //       ]
+        //     : undefined;
+        await fetch(`https://gitlab.com/api/v4/projects/${projectId}/issues/${issueIid}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            milestone_id: milestoneId ? formatMilestoneId(milestoneId) : undefined,
+            labels: labels?.map((l) => l.title) ?? undefined,
+          }),
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      return {
+        fullPath,
+        issue,
+        issueAfter,
+        issueBefore,
+        labels,
+        milestoneId,
+      };
+    },
+    [token]
+  );
+}
+
+export function useMutationReorderIssue() {
+  const reorderIssue = useReorderIssue();
+
+  return useMutation(reorderIssue, {
+    onMutate: ({ fullPath, issue, issueAfter, issueBefore, labels, milestoneId }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      queryCache.cancelQueries(["project", fullPath, "issues"]);
+
+      // Snapshot the previous value
+      const previousIssueList = queryCache.getQueryData(["project", fullPath, "issues"]);
+      const newIssueList = [...previousIssueList];
+
+      const index = newIssueList.findIndex((x) => x.id === issue.id);
+
+      newIssueList[index] = {
+        ...newIssueList[index],
+        relativePosition: issueAfter
+          ? issueAfter.relativePosition - 0.5
+          : issueBefore
+          ? issueBefore.relativePosition + 0.5
+          : newIssueList[index].relativePosition,
+
+        labels: labels ? labels : newIssueList[index].labels,
+
+        milestone: milestoneId ? { id: milestoneId } : newIssueList[index].milestone,
+
+        isSaving: true,
+      };
+
+      // Optimistically update to the new value
+      queryCache.setQueryData(["project", fullPath, "issues"], newIssueList);
+
+      // Return a rollback function
+      return () => queryCache.setQueryData(["project", fullPath, "issues"], previousIssueList);
+    },
+
+    onError: (err, data, rollback) => rollback(),
+
+    onSettled: ({ fullPath }) => {
+      queryCache.invalidateQueries(["project", fullPath, "issues"]);
+    },
+  });
+}
+
+export function useQueryGraphProject(fullPath) {
+  const graphQLClient = useGraphQLClient();
+
+  const execute = React.useCallback(
+    async (key, x) => {
+      const res = await graphQLClient.request(
+        gql`
+        query {
+          project(fullPath: "${x}") {
+            id
+            name
+            nameWithNamespace
+            labels {
+              nodes {
+                id
+                title
+                color
+              }
+            }
+            group {
+              labels {
+                nodes {
+                  id
+                  title
+                }
+              }
+            }
+            milestones {
+              nodes {
+                id
+                title
+                startDate
+                dueDate
+              }
+            }
+          }
+        }
+      `
+      );
+      return res.project;
+    },
+    [graphQLClient]
+  );
+
+  return useQuery(["project", fullPath], execute, { enabled: graphQLClient });
+}
+
+export function useQueryGraphIssues(fullPath) {
+  const graphQLClient = useGraphQLClient();
+
+  const execute = React.useCallback(
+    async (key, fullPath) => {
+      const res = await graphQLClient.request(
+        gql`
+        query {
+          project(fullPath: "${fullPath}") {
+            id
+            name
+            issues {
+              nodes {
+                id
+                iid
+                reference
+                title
+                relativePosition
+                labels {
+                  nodes {
+                    title
+                    id
+                  } 
+                }
+                milestone {
+                  id
+                }
+              }
+            }
+          }
+        }
+      `
+      );
+      return res.project.issues.nodes.map((x) => ({ ...x, labels: x.labels.nodes }));
+    },
+    [graphQLClient]
+  );
+
+  return useQuery(["project", fullPath, "issues"], execute);
+}
+
+/*
+query {
+  project(fullPath: "gitlab-org/gitlab") {
+    board(id: "gid://gitlab/Board/353448") {
+      lists(id: "gid://gitlab/List/750477") {
+        nodes {
+          issues {
+            nodes {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+*/
