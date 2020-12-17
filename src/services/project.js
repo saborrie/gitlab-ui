@@ -124,7 +124,7 @@ function useReorderIssue() {
           method: "PUT",
           body: JSON.stringify({ move_after_id, move_before_id }),
           headers: {
-            Authorization: "Bearer token",
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
