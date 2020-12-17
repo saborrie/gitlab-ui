@@ -31,11 +31,16 @@ function Column({ id, issues }) {
                   {...dragProvided.draggableProps}
                   {...dragProvided.dragHandleProps}
                 >
-                  {t.reference} {t.isSaving && <span style={{ color: "red" }}>saving...</span>}
-                  <br />
-                  {t.title}
-                  <br />
-                  <small>{t.labels?.map((x) => x.title).join(", ")}</small>
+                  {/* {t.reference} {t.isSaving && <span style={{ color: "red" }}>saving...</span>} */}
+
+                  <Ticket.Content>
+                    {t.title}
+                    <small>{t.labels?.map((x) => x.title).join(", ")}</small>
+                  </Ticket.Content>
+                  <Ticket.Spacer />
+                  <Ticket.Number>
+                    {t.reference} {t.isSaving && <span>saving...</span>}
+                  </Ticket.Number>
                 </Ticket>
               )}
             </Draggable>

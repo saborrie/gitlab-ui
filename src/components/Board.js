@@ -16,7 +16,10 @@ const useStyles = createUseStyles({
     left: 0,
     top: 80,
     background: "#2a2c32",
-    padding: 20,
+    padding: [[4, 20]],
+    fallbacks: {
+      position: "-webkit-sticky",
+    },
   },
   cell: {
     width: 220,
@@ -26,6 +29,7 @@ const useStyles = createUseStyles({
   headerRow: {
     display: "flex",
     position: "sticky",
+
     top: 0,
     background: "#2a2c32",
     // overflowX: "auto",
@@ -34,6 +38,9 @@ const useStyles = createUseStyles({
     // },
     // "-ms-overflow-style": "none",
     // scrollbarWith: "none",
+    fallbacks: {
+      position: "-webkit-sticky",
+    },
   },
   columHeader: {
     width: 220,
