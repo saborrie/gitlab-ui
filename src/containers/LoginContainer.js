@@ -15,6 +15,15 @@ function LoginContainer() {
       <input value={token} onChange={(e) => setToken(e.target.value)} />
 
       <button onClick={handleSubmit}>Submit</button>
+
+      <h2>How to create a token:</h2>
+      <ol>
+        <li>Click your user in the top right corner of GitLab</li>
+        <li>Select "settings" in the dropdown</li>
+        <li>Select "Access Tokens" on the sidebar</li>
+        <li>Write a name for your new token and select the "api" scope</li>
+        <li>Choose an expiry for your token and create it</li>
+      </ol>
     </div>
   );
 }
