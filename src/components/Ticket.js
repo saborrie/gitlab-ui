@@ -1,5 +1,6 @@
 import React from "react";
 import { createUseStyles } from "react-jss";
+import clsx from "clsx";
 
 const useStyles = createUseStyles({
   root: {
@@ -9,6 +10,7 @@ const useStyles = createUseStyles({
     "&:last-child": {
       paddingBottom: 20,
     },
+    zIndex: 0,
   },
   box: {
     padding: 10,
@@ -16,7 +18,7 @@ const useStyles = createUseStyles({
     // border: "1px solid white",
     height: "100%",
     overflow: "hidden",
-    background: "#2a2c32",
+    background: "#2c2e35",
     boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.4)",
     display: "flex",
     flexDirection: "column",
@@ -32,17 +34,20 @@ const useStyles = createUseStyles({
   ticketContent: {
     flexShrink: 0,
   },
+  faded: {
+    opacity: 0.4,
+  },
 });
 
-function Ticket({ children, ...rest }, ref) {
+const Ticket = React.forwardRef(function Ticket({ children, faded, ...rest }, ref) {
   const classes = useStyles();
 
   return (
-    <div ref={ref} className={classes.root} {...rest}>
+    <div ref={ref} className={clsx(classes.root, { [classes.faded]: faded })} {...rest}>
       <div className={classes.box}>{children}</div>
     </div>
   );
-}
+});
 
 Ticket.Content = function TicketContent({ children, ...rest }) {
   const classes = useStyles();
@@ -74,4 +79,5 @@ Ticket.Number = function TicketNumber({ children, ...rest }) {
   );
 };
 
-export default React.forwardRef(Ticket);
+// export default React.forwardRef(Ticket);
+export default Ticket;

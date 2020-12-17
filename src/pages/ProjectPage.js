@@ -6,7 +6,7 @@ import TitleCard from "../components/TitleCard";
 import Ticket from "../components/Ticket";
 import Dropzone from "../components/Dropzone";
 
-import Mice from "../containers/Mice";
+// import Mice from "../containers/Mice";
 
 import {
   useMutationReorderIssue,
@@ -17,6 +17,7 @@ import {
 import { update, exit, useCollaborateState } from "../services/collaborate";
 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { pickTextColorBasedOnBgColorAdvanced } from "../utils";
 
 function Column({ id, issues }) {
   return (
@@ -27,6 +28,7 @@ function Column({ id, issues }) {
             <Draggable draggableId={`${t.iid}`} index={i} key={t.id}>
               {(dragProvided, dragSnapshot) => (
                 <Ticket
+                  faded={t.state === "closed"}
                   ref={dragProvided.innerRef}
                   {...dragProvided.draggableProps}
                   {...dragProvided.dragHandleProps}
@@ -35,7 +37,23 @@ function Column({ id, issues }) {
 
                   <Ticket.Content>
                     {t.title}
-                    <small>{t.labels?.map((x) => x.title).join(", ")}</small>
+                    <br />
+                    <br />
+                    <small>
+                      {t.labels?.map((x) => (
+                        <span
+                          style={{
+                            padding: 2,
+                            marginRight: 4,
+                            borderRadius: 2,
+                            background: x.color,
+                            color: pickTextColorBasedOnBgColorAdvanced(x.color, "#f0f0f0", "black"),
+                          }}
+                        >
+                          {x.title}
+                        </span>
+                      ))}
+                    </small>
                   </Ticket.Content>
                   <Ticket.Spacer />
                   <Ticket.Number>
@@ -66,7 +84,7 @@ function useBoard(projectPath) {
 
     const columns = [
       { name: "No label" },
-      ...labels?.map((label) => ({ name: label.title, id: label.id, label })),
+      ...labels?.map((label) => ({ name: label.title, id: label.id, color: label.color, label })),
     ];
 
     const rows = [
@@ -199,9 +217,9 @@ function ProjectPage() {
         <DragDropContext onDragEnd={handleDragEnd}>
           <Board.Root>
             <Board.HeaderRow>
-              {columns?.map(({ id, name }) => (
+              {columns?.map(({ id, name, color }) => (
                 <Board.ColumnHeader key={id || "none"}>
-                  <TitleCard>{name}</TitleCard>
+                  <TitleCard color={color}>{name}</TitleCard>
                 </Board.ColumnHeader>
               ))}
             </Board.HeaderRow>

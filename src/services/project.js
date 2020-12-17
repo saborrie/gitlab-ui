@@ -274,10 +274,12 @@ export function useQueryGraphIssues(fullPath) {
                 reference
                 title
                 relativePosition
+                state
                 labels {
                   nodes {
                     title
                     id
+                    color
                   } 
                 }
                 milestone {

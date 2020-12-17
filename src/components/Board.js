@@ -12,21 +12,26 @@ const useStyles = createUseStyles({
     // overflowX: "auto",
   },
   rowHeader: {
+    zIndex: 2,
     position: "sticky",
     left: 0,
     top: 80,
     background: "#2a2c32",
     padding: [[4, 20]],
+
+    boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.8)",
+
     fallbacks: {
       position: "-webkit-sticky",
     },
   },
   cell: {
-    width: 220,
+    width: 280,
     minHeight: 220,
     flexShrink: 0,
   },
   headerRow: {
+    zIndex: 3,
     display: "flex",
     position: "sticky",
 
@@ -43,7 +48,8 @@ const useStyles = createUseStyles({
     },
   },
   columHeader: {
-    width: 220,
+    zIndex: 3,
+    width: 280,
     height: 80,
     flexShrink: 0,
     padding: 20,

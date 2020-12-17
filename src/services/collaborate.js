@@ -1,46 +1,46 @@
-import React from "react";
-import * as signalR from "@microsoft/signalr";
+// import React from "react";
+// import * as signalR from "@microsoft/signalr";
 
-let connection = new signalR.HubConnectionBuilder()
-  .withUrl("http://localhost:5000/collaborate")
-  .build();
+// let connection = new signalR.HubConnectionBuilder()
+//   .withUrl("http://localhost:5000/collaborate")
+//   .build();
 
-connection.on("Log", (data) => {
-  console.log(data);
-});
-
-// const states = {};
-
-// connection.on("Update", (groupName, user, state) => {
-//   states[groupName] = states[groupName] || {};
-//   states[groupName][user] = JSON.parse(state);
+// connection.on("Log", (data) => {
+//   console.log(data);
 // });
 
-export const started = connection.start();
+// // const states = {};
 
-export function useCollaborateState(groupName) {
-  const [groupState, setGroupState] = React.useState({
-    connectionId: connection.connectionId,
-    groupName,
-    data: {},
-  });
+// // connection.on("Update", (groupName, user, state) => {
+// //   states[groupName] = states[groupName] || {};
+// //   states[groupName][user] = JSON.parse(state);
+// // });
 
-  React.useEffect(() => {
-    function handleUpdate(eventGroupName, user, state) {
-      if (groupName === eventGroupName) {
-        setGroupState((x) => ({ ...x, data: { ...x.data, [user]: JSON.parse(state) } }));
-      }
-    }
+// export const started = connection.start();
 
-    connection.on("Update", handleUpdate);
-    return () => connection.off("Update", handleUpdate);
-  }, [groupName]);
+// export function useCollaborateState(groupName) {
+//   const [groupState, setGroupState] = React.useState({
+//     connectionId: connection.connectionId,
+//     groupName,
+//     data: {},
+//   });
 
-  return [
-    groupState,
-    async (state) => {
-      await started;
-      connection.invoke("Update", groupName, JSON.stringify(state));
-    },
-  ];
-}
+//   React.useEffect(() => {
+//     function handleUpdate(eventGroupName, user, state) {
+//       if (groupName === eventGroupName) {
+//         setGroupState((x) => ({ ...x, data: { ...x.data, [user]: JSON.parse(state) } }));
+//       }
+//     }
+
+//     connection.on("Update", handleUpdate);
+//     return () => connection.off("Update", handleUpdate);
+//   }, [groupName]);
+
+//   return [
+//     groupState,
+//     async (state) => {
+//       await started;
+//       connection.invoke("Update", groupName, JSON.stringify(state));
+//     },
+//   ];
+// }
