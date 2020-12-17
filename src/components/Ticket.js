@@ -26,10 +26,13 @@ const useStyles = createUseStyles({
   spacer: {
     flexGrow: 1,
   },
-  ticketNumber: {
+  ticketInfo: {
     color: "#f0f0f0",
     flexShrink: 0,
     fontSize: 11,
+    display: "flex",
+    alignItems: "center",
+    height: 20,
   },
   ticketContent: {
     flexShrink: 0,
@@ -69,11 +72,11 @@ Ticket.Spacer = function TicketSpacer({ children, ...rest }) {
   );
 };
 
-Ticket.Number = function TicketNumber({ children, ...rest }) {
+Ticket.Info = function TicketInfo({ children, ...rest }) {
   const classes = useStyles();
 
   return (
-    <div className={classes.ticketNumber} {...rest}>
+    <div className={classes.ticketInfo} {...rest}>
       {children}
     </div>
   );

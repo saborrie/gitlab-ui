@@ -275,6 +275,11 @@ export function useQueryGraphIssues(fullPath) {
                 title
                 relativePosition
                 state
+                assignees {
+                  nodes {
+                    avatarUrl
+                  }
+                }
                 labels {
                   nodes {
                     title

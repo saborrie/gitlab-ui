@@ -5,6 +5,7 @@ import Board from "../components/Board";
 import TitleCard from "../components/TitleCard";
 import Ticket from "../components/Ticket";
 import Dropzone from "../components/Dropzone";
+import Avatar from "../components/Avatar";
 
 // import Mice from "../containers/Mice";
 
@@ -56,9 +57,13 @@ function Column({ id, issues }) {
                     </small>
                   </Ticket.Content>
                   <Ticket.Spacer />
-                  <Ticket.Number>
+                  <Ticket.Info>
                     {t.reference} {t.isSaving && <span>saving...</span>}
-                  </Ticket.Number>
+                    <Ticket.Spacer />
+                    {t.assignees?.nodes?.map((n) => (
+                      <Avatar url={`https://gitlab.com${n.avatarUrl}`} />
+                    ))}
+                  </Ticket.Info>
                 </Ticket>
               )}
             </Draggable>
