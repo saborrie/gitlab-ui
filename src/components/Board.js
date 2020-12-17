@@ -15,7 +15,7 @@ const useStyles = createUseStyles({
     zIndex: 2,
     position: "sticky",
     left: 0,
-    top: 80,
+    top: 40,
     background: "#2a2c32",
     padding: [[4, 20]],
 
@@ -50,9 +50,9 @@ const useStyles = createUseStyles({
   columHeader: {
     zIndex: 3,
     width: 280,
-    height: 80,
+    height: 40,
     flexShrink: 0,
-    padding: 20,
+    padding: [[8, 20]],
     background: "#2a2c32",
   },
 });

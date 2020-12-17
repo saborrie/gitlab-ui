@@ -4,12 +4,12 @@ import { pickTextColorBasedOnBgColorAdvanced } from "../utils.js";
 
 const useStyles = createUseStyles({
   root: {
-    padding: 10,
+    padding: [[4, 10]],
     borderRadius: 2,
     background: "#353840",
     boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.4)",
     flexGrow: 1,
-    height: 40,
+    height: 24,
   },
 });
 
