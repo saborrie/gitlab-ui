@@ -8,7 +8,7 @@ const useStyles = createUseStyles({
     flexGrow: 1,
     height: 160,
     "&:last-child": {
-      paddingBottom: 20,
+      marginBottom: 20,
     },
     zIndex: 0,
   },

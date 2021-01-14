@@ -1,6 +1,6 @@
 import React from "react";
 import { useToken } from "./auth";
-import { useQuery, useMutation, queryCache } from "react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "react-query";
 import parse from "parse-link-header";
 import { GraphQLClient, gql } from "graphql-request";
 
@@ -167,14 +167,15 @@ function useReorderIssue() {
 
 export function useMutationReorderIssue() {
   const reorderIssue = useReorderIssue();
+  const queryClient = useQueryClient();
 
   return useMutation(reorderIssue, {
     onMutate: ({ fullPath, issue, issueAfter, issueBefore, labels, milestoneId }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      queryCache.cancelQueries(["project", fullPath, "issues"]);
+      queryClient.cancelQueries(["project", fullPath, "issues"]);
 
       // Snapshot the previous value
-      const previousIssueList = queryCache.getQueryData(["project", fullPath, "issues"]);
+      const previousIssueList = queryClient.getQueryData(["project", fullPath, "issues"]);
       const newIssueList = [...previousIssueList];
 
       const index = newIssueList.findIndex((x) => x.id === issue.id);
@@ -195,16 +196,16 @@ export function useMutationReorderIssue() {
       };
 
       // Optimistically update to the new value
-      queryCache.setQueryData(["project", fullPath, "issues"], newIssueList);
+      queryClient.setQueryData(["project", fullPath, "issues"], newIssueList);
 
       // Return a rollback function
-      return () => queryCache.setQueryData(["project", fullPath, "issues"], previousIssueList);
+      return () => queryClient.setQueryData(["project", fullPath, "issues"], previousIssueList);
     },
 
     onError: (err, data, rollback) => rollback(),
 
     onSettled: ({ fullPath }) => {
-      queryCache.invalidateQueries(["project", fullPath, "issues"]);
+      queryClient.invalidateQueries(["project", fullPath, "issues"]);
     },
   });
 }
@@ -213,7 +214,9 @@ export function useQueryGraphProject(fullPath) {
   const graphQLClient = useGraphQLClient();
 
   const execute = React.useCallback(
-    async (key, x) => {
+    async ({ queryKey }) => {
+      const [key, x] = queryKey;
+
       const res = await graphQLClient.request(
         gql`
         query {
@@ -253,55 +256,113 @@ export function useQueryGraphProject(fullPath) {
     [graphQLClient]
   );
 
-  return useQuery(["project", fullPath], execute, { enabled: graphQLClient });
+  return useQuery(["project", fullPath], execute, { enabled: Boolean(graphQLClient) });
 }
 
 export function useQueryGraphIssues(fullPath) {
   const graphQLClient = useGraphQLClient();
 
   const execute = React.useCallback(
-    async (key, fullPath) => {
-      const res = await graphQLClient.request(
-        gql`
-        query {
-          project(fullPath: "${fullPath}") {
-            id
-            name
-            issues {
-              nodes {
-                id
-                iid
-                reference
-                title
-                relativePosition
-                state
-                assignees {
-                  nodes {
-                    avatarUrl
-                  }
+    async ({ queryKey }) => {
+      const [key, fullPath] = queryKey;
+      let results = [];
+
+      async function loadPage(pageParam) {
+        const res = await graphQLClient.request(
+          gql`
+          query {
+            project(fullPath: "${fullPath}") {
+              id
+              name
+              issues(after: "${pageParam}") {
+                pageInfo {
+                  hasNextPage
+                  endCursor
                 }
-                labels {
-                  nodes {
-                    title
-                    id
-                    color
-                  } 
-                }
-                milestone {
+                nodes {
                   id
+                  iid
+                  reference
+                  title
+                  relativePosition
+                  state
+                  assignees {
+                    nodes {
+                      avatarUrl
+                    }
+                  }
+                  labels {
+                    nodes {
+                      title
+                      id
+                      color
+                    } 
+                  }
+                  milestone {
+                    id
+                  }
                 }
               }
             }
           }
-        }
-      `
-      );
-      return res.project.issues.nodes.map((x) => ({ ...x, labels: x.labels.nodes }));
+        `
+        );
+        return {
+          issues: res.project.issues.nodes.map((x) => ({ ...x, labels: x.labels.nodes })),
+          pageInfo: res.project.issues.pageInfo,
+        };
+      }
+
+      let result = await loadPage(""); // initial page cursor is empty string
+      results = [...results, ...result.issues];
+
+      while (result.pageInfo.hasNextPage) {
+        result = await loadPage(result.pageInfo.endCursor);
+        results = [...results, ...result.issues];
+      }
+
+      return results;
     },
     [graphQLClient]
   );
 
   return useQuery(["project", fullPath, "issues"], execute);
+}
+
+export function useInfiniteQueryGraphProjects() {
+  const graphQLClient = useGraphQLClient();
+
+  const execute = React.useCallback(
+    async ({ pageParam = "" }) => {
+      const res = await graphQLClient.request(
+        gql`
+          query {
+            projects(membership: true, after: "${pageParam}") {
+              nodes {
+                  fullPath
+                  name
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        `
+      );
+      return res.projects;
+    },
+    [graphQLClient]
+  );
+
+  return useInfiniteQuery(["projects"], execute, {
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage?.pageInfo?.hasNextPage) {
+        return lastPage.pageInfo.endCursor;
+      }
+      return undefined;
+    },
+  });
 }
 
 /*

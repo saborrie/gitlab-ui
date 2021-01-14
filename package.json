@@ -15,8 +15,8 @@
     "react-beautiful-dnd": "^13.0.0",
     "react-dom": "^16.13.1",
     "react-jss": "^10.4.0",
-    "react-query": "^2.23.1",
-    "react-query-devtools": "^2.5.1",
+    "react-query": "^3.3.4",
+    "react-query-devtools": "^2.6.3",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
     "react-scroll-sync": "^0.8.0"
