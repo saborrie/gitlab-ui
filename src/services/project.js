@@ -245,6 +245,8 @@ export function useQueryGraphProject(fullPath) {
                 title
                 startDate
                 dueDate
+                state
+                description
               }
             }
           }

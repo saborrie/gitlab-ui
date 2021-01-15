@@ -13,6 +13,7 @@
     "parse-link-header": "^1.0.1",
     "react": "^16.13.1",
     "react-beautiful-dnd": "^13.0.0",
+    "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.13.1",
     "react-jss": "^10.4.0",
     "react-query": "^3.3.4",

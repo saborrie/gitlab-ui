@@ -98,8 +98,11 @@ function useBoard(projectPath) {
 
     const rows = [
       ...milestones?.map((milestone) => ({
-        name: milestone.title,
+        name: `${milestone.title.padEnd(24)} (${milestone.startDate} - ${
+          milestone.dueDate
+        }) `.padEnd(56),
         id: milestone.id,
+        state: milestone.state,
         milestone,
         cells: columns.map((c) => ({ id: milestone.id + c.id, label: c.label, milestone })),
       })),
@@ -146,6 +149,8 @@ function useBoard(projectPath) {
 function ProjectPage() {
   const { projectPath } = useParams();
   const { project, rows, cells, columns, isFetching } = useBoard(projectPath);
+
+  const [collapsedRows, setCollapsedRows] = React.useState([]);
 
   const reorder = useMutationReorderIssue();
 
@@ -201,6 +206,12 @@ function ProjectPage() {
     }
   }
 
+  React.useEffect(() => {
+    if (rows) {
+      setCollapsedRows(rows.filter((r) => r.state === "closed").map((r) => r.id));
+    }
+  }, [Boolean(rows)]);
+
   // return (
   //   <>
   //     <pre>{JSON.stringify(collaborateState, null, 4)}</pre>
@@ -243,20 +254,34 @@ function ProjectPage() {
             </Board.HeaderRow>
             {rows?.map((row) => (
               <React.Fragment key={row.id}>
-                <Board.RowHeader>{row.name}</Board.RowHeader>
-                <Board.Row>
-                  {row.cells.map((rowCell, i) => {
-                    if (!rowCell.id) {
-                      console.log(row, i);
-                    }
+                <Board.RowHeader
+                  onClick={() =>
+                    collapsedRows.includes(row.id)
+                      ? setCollapsedRows(collapsedRows.filter((x) => x != row.id))
+                      : setCollapsedRows([...collapsedRows, row.id])
+                  }
+                >
+                  <span style={{ opacity: row.state === "closed" ? 0.4 : 1, whiteSpace: "pre" }}>
+                    {row.name}
+                    {/* {row.cells.reduce((totals, cell) => totals c.length).length} issues */}
+                    {row.state === "closed" ? "        Closed" : null}
+                  </span>
+                </Board.RowHeader>
+                {!collapsedRows.includes(row.id) && (
+                  <Board.Row>
+                    {row.cells.map((rowCell, i) => {
+                      if (!rowCell.id) {
+                        console.log(row, i);
+                      }
 
-                    return (
-                      <Board.Cell key={rowCell.id}>
-                        <Column id={rowCell.id} issues={cells[rowCell.id].issues} />
-                      </Board.Cell>
-                    );
-                  })}
-                </Board.Row>
+                      return (
+                        <Board.Cell key={rowCell.id}>
+                          <Column id={rowCell.id} issues={cells[rowCell.id].issues} />
+                        </Board.Cell>
+                      );
+                    })}
+                  </Board.Row>
+                )}
               </React.Fragment>
             ))}
             {/* <Mice projectPath={projectPath} /> */}

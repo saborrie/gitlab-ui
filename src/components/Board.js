@@ -1,11 +1,12 @@
 import React from "react";
 import { createUseStyles } from "react-jss";
+import { Scrollbars } from "react-custom-scrollbars";
 
 const useStyles = createUseStyles({
   root: {
     // background: "yellow",
     height: "100%",
-    overflow: "scroll",
+    // overflow: "scroll",
   },
   row: {
     display: "flex",
@@ -20,6 +21,8 @@ const useStyles = createUseStyles({
     padding: [[4, 20]],
 
     boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.8)",
+
+    cursor: "pointer",
 
     fallbacks: {
       position: "-webkit-sticky",
@@ -55,6 +58,17 @@ const useStyles = createUseStyles({
     padding: [[8, 20]],
     background: "#2a2c32",
   },
+  thumbHorizontal: {
+    background: "white",
+    height: 10,
+    borderRadius: 2,
+  },
+  thumbVertical: {
+    background: "white",
+    width: 10,
+    zIndex: 100,
+    borderRadius: 2,
+  },
 });
 
 const BoardScrollContext = React.createContext(null);
@@ -63,7 +77,14 @@ function Root({ children }) {
   const classes = useStyles();
   return (
     <BoardScrollContext.Provider>
-      <div className={classes.root}>{children}</div>
+      <div className={classes.root}>
+        <Scrollbars
+          renderThumbHorizontal={(props) => <div {...props} className={classes.thumbHorizontal} />}
+          renderThumbVertical={(props) => <div {...props} className={classes.thumbVertical} />}
+        >
+          {children}
+        </Scrollbars>
+      </div>
     </BoardScrollContext.Provider>
   );
 }
@@ -71,9 +92,13 @@ function Row({ children }) {
   const classes = useStyles();
   return <div className={classes.row}>{children}</div>;
 }
-function RowHeader({ children }) {
+function RowHeader({ children, onClick }) {
   const classes = useStyles();
-  return <div className={classes.rowHeader}>{children}</div>;
+  return (
+    <div onClick={onClick} className={classes.rowHeader}>
+      {children}
+    </div>
+  );
 }
 function Cell({ children }) {
   const classes = useStyles();
