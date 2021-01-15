@@ -13,12 +13,12 @@ const useStyles = createUseStyles({
     zIndex: 0,
   },
   box: {
-    padding: 10,
+    padding: 2,
     borderRadius: 2,
     // border: "1px solid white",
     height: "100%",
     overflow: "hidden",
-    background: "#2c2e35",
+    // background: "#2c2e35",
     boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.4)",
     display: "flex",
     flexDirection: "column",
@@ -38,16 +38,33 @@ const useStyles = createUseStyles({
     flexShrink: 0,
   },
   faded: {
-    opacity: 0.4,
+    "& $inner": {
+      opacity: 0.4,
+    },
+  },
+  selected: {
+    border: "2px solid white",
+    padding: 0,
+  },
+  inner: {
+    padding: 8,
+    flexGrow: 1,
+    height: "100%",
+    overflow: "hidden",
+    background: "#2c2e35",
+    display: "flex",
+    flexDirection: "column",
   },
 });
 
-const Ticket = React.forwardRef(function Ticket({ children, faded, ...rest }, ref) {
+const Ticket = React.forwardRef(function Ticket({ children, faded, selected, ...rest }, ref) {
   const classes = useStyles();
 
   return (
-    <div ref={ref} className={clsx(classes.root, { [classes.faded]: faded })} {...rest}>
-      <div className={classes.box}>{children}</div>
+    <div ref={ref} className={classes.root} {...rest}>
+      <div className={clsx(classes.box, { [classes.faded]: faded, [classes.selected]: selected })}>
+        <div className={classes.inner}>{children}</div>
+      </div>
     </div>
   );
 });

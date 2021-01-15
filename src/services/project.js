@@ -229,6 +229,7 @@ export function useQueryGraphProject(fullPath) {
                 id
                 title
                 color
+                textColor
               }
             }
             group {
@@ -298,6 +299,7 @@ export function useQueryGraphIssues(fullPath) {
                       title
                       id
                       color
+                      textColor
                     } 
                   }
                   milestone {

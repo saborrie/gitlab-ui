@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
-import { ReactQueryDevtools } from "react-query-devtools";
 
 import jss from "jss";
 import nested from "jss-plugin-nested";
@@ -22,7 +21,6 @@ async function run() {
       <LoginProvider>
         <App />
       </LoginProvider>
-      <ReactQueryDevtools />
     </React.StrictMode>,
     document.getElementById("root")
   );

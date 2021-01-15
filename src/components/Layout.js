@@ -19,6 +19,7 @@ const useStyles = createUseStyles({
   content: {
     flexGrow: 1,
     maxHeight: "calc(100% - 56px)",
+    display: "flex",
   },
 });
 

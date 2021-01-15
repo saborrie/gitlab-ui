@@ -1,5 +1,6 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useHistory, useLocation, useParams } from "react-router-dom";
+import queryString from "query-string";
 import Layout from "../components/Layout";
 import Board from "../components/Board";
 import TitleCard from "../components/TitleCard";
@@ -8,7 +9,9 @@ import Dropzone from "../components/Dropzone";
 import Avatar from "../components/Avatar";
 import Logo from "../components/Logo";
 import Loader from "../components/Loader";
+import Drawer from "../components/Drawer";
 
+import IssueDetailsContainer from "../containers/IssueDetailsContainer";
 // import Mice from "../containers/Mice";
 
 import {
@@ -22,7 +25,7 @@ import { update, exit, useCollaborateState } from "../services/collaborate";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { pickTextColorBasedOnBgColorAdvanced } from "../utils";
 
-function Column({ id, issues }) {
+function Column({ id, issues, onIssueClicked, selectedIssueId }) {
   return (
     <Droppable droppableId={id} type="column">
       {(dropProvided, dropSnapshot) => (
@@ -31,7 +34,13 @@ function Column({ id, issues }) {
             <Draggable draggableId={`${t.iid}`} index={i} key={t.id}>
               {(dragProvided, dragSnapshot) => (
                 <Ticket
+                  id={t.id}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onIssueClicked(t.id);
+                  }}
                   faded={t.state === "closed"}
+                  selected={t.id === selectedIssueId}
                   ref={dragProvided.innerRef}
                   {...dragProvided.draggableProps}
                   {...dragProvided.dragHandleProps}
@@ -146,11 +155,27 @@ function useBoard(projectPath) {
   }, [project.data, graphIssues]);
 }
 
+function isInViewport(elem, container) {
+  const bounding = elem.getBoundingClientRect();
+
+  const result =
+    bounding.top >= 0 &&
+    bounding.left >= 0 &&
+    bounding.bottom <= (container.clientHeight || document.documentElement.clientHeight) &&
+    bounding.right <= (container.clientWidth || document.documentElement.clientWidth);
+
+  console.log({ bounding, container, result });
+  return result;
+}
+
 function ProjectPage() {
   const { projectPath } = useParams();
+  const history = useHistory();
+  const boardRef = React.useRef();
+  const location = useLocation();
   const { project, rows, cells, columns, isFetching } = useBoard(projectPath);
 
-  const [collapsedRows, setCollapsedRows] = React.useState([]);
+  const [collapsedRows, setCollapsedRows] = React.useState(null);
 
   const reorder = useMutationReorderIssue();
 
@@ -206,11 +231,34 @@ function ProjectPage() {
     }
   }
 
-  React.useEffect(() => {
+  const selectedIssueId = queryString.parse(location.search).ticket || undefined;
+
+  function scrollSelectedIssueIntoView() {
+    if (collapsedRows && selectedIssueId) {
+      const element = document.getElementById(selectedIssueId);
+
+      // setTimeout(() => {
+      if (element && boardRef.current && !isInViewport(element, boardRef.current)) {
+        console.log("scrolling.");
+        // element.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        element.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+      }
+      // }, 300);
+    }
+  }
+
+  // React.useEffect(scrollSelectedIssueIntoView, [selectedIssueId, Boolean(collapsedRows)]);
+
+  React.useLayoutEffect(() => {
     if (rows) {
       setCollapsedRows(rows.filter((r) => r.state === "closed").map((r) => r.id));
+      // scrollSelectedIssueIntoView();
     }
   }, [Boolean(rows)]);
+
+  function handleBoardClick() {
+    history.replace({ search: "" });
+  }
 
   // return (
   //   <>
@@ -244,7 +292,7 @@ function ProjectPage() {
       </Layout.Topbar>
       <Layout.Content>
         <DragDropContext onDragEnd={handleDragEnd}>
-          <Board.Root>
+          <Board.Root ref={boardRef} onClick={handleBoardClick}>
             <Board.HeaderRow>
               {columns?.map(({ id, name, color }) => (
                 <Board.ColumnHeader key={id || "none"}>
@@ -255,11 +303,13 @@ function ProjectPage() {
             {rows?.map((row) => (
               <React.Fragment key={row.id}>
                 <Board.RowHeader
-                  onClick={() =>
-                    collapsedRows.includes(row.id)
+                  onClick={(event) => {
+                    event.stopPropagation();
+
+                    collapsedRows?.includes(row.id)
                       ? setCollapsedRows(collapsedRows.filter((x) => x != row.id))
-                      : setCollapsedRows([...collapsedRows, row.id])
-                  }
+                      : setCollapsedRows([...collapsedRows, row.id]);
+                  }}
                 >
                   <span style={{ opacity: row.state === "closed" ? 0.4 : 1, whiteSpace: "pre" }}>
                     {row.name}
@@ -267,7 +317,7 @@ function ProjectPage() {
                     {row.state === "closed" ? "        Closed" : null}
                   </span>
                 </Board.RowHeader>
-                {!collapsedRows.includes(row.id) && (
+                {!collapsedRows?.includes(row.id) && (
                   <Board.Row>
                     {row.cells.map((rowCell, i) => {
                       if (!rowCell.id) {
@@ -276,7 +326,18 @@ function ProjectPage() {
 
                       return (
                         <Board.Cell key={rowCell.id}>
-                          <Column id={rowCell.id} issues={cells[rowCell.id].issues} />
+                          <Column
+                            id={rowCell.id}
+                            issues={cells[rowCell.id].issues}
+                            selectedIssueId={selectedIssueId}
+                            onIssueClicked={(id) => {
+                              if (id === selectedIssueId) {
+                                history.replace({ search: undefined });
+                              } else {
+                                history.replace({ search: queryString.stringify({ ticket: id }) });
+                              }
+                            }}
+                          />
                         </Board.Cell>
                       );
                     })}
@@ -287,6 +348,9 @@ function ProjectPage() {
             {/* <Mice projectPath={projectPath} /> */}
           </Board.Root>
         </DragDropContext>
+        <Drawer show={Boolean(selectedIssueId)} onFrame={scrollSelectedIssueIntoView}>
+          {selectedIssueId ? <IssueDetailsContainer issueId={selectedIssueId} /> : null}
+        </Drawer>
       </Layout.Content>
     </Layout.Root>
   );

@@ -6,6 +6,7 @@ const useStyles = createUseStyles({
   root: {
     // background: "yellow",
     height: "100%",
+    flexGrow: 1,
     // overflow: "scroll",
   },
   row: {
@@ -73,11 +74,11 @@ const useStyles = createUseStyles({
 
 const BoardScrollContext = React.createContext(null);
 
-function Root({ children }) {
+const Root = React.forwardRef(function Root({ children, ...rest }, ref) {
   const classes = useStyles();
   return (
     <BoardScrollContext.Provider>
-      <div className={classes.root}>
+      <div className={classes.root} ref={ref} {...rest}>
         <Scrollbars
           renderThumbHorizontal={(props) => <div {...props} className={classes.thumbHorizontal} />}
           renderThumbVertical={(props) => <div {...props} className={classes.thumbVertical} />}
@@ -87,7 +88,7 @@ function Root({ children }) {
       </div>
     </BoardScrollContext.Provider>
   );
-}
+});
 function Row({ children }) {
   const classes = useStyles();
   return <div className={classes.row}>{children}</div>;

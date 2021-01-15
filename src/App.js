@@ -1,6 +1,7 @@
 import React from "react";
 import { Switch, Route, BrowserRouter, Redirect } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { ReactQueryDevtools } from "react-query/devtools";
 
 import LoginContainer from "./containers/LoginContainer";
 import HomePage from "./pages/HomePage";
@@ -18,6 +19,8 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={false} />
+
       <BrowserRouter>
         <Switch>
           <Route path="/project/:projectPath+">
