@@ -1,6 +1,12 @@
 import React from "react";
 import { useToken } from "./auth";
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  useQueryErrorResetBoundary,
+} from "react-query";
 import parse from "parse-link-header";
 import { GraphQLClient, gql } from "graphql-request";
 

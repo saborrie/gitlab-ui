@@ -58,6 +58,7 @@ export function useQueryIssue(id) {
                       id
                       name
                     }
+                    createdAt
                     body
                     system
                     systemNoteIconName
@@ -75,5 +76,59 @@ export function useQueryIssue(id) {
     [graphQLClient]
   );
 
-  return useQuery(["issue", id], execute, { enabled: Boolean(graphQLClient) });
+  return useQuery(["issue", id], execute, {
+    enabled: Boolean(graphQLClient),
+    refetchInterval: 15 * 1000,
+  });
+}
+
+function useCreateNote() {
+  const graphQLClient = useGraphQLClient();
+
+  return React.useCallback(
+    async ({ discussionId, issueId, body, clientMutationId }) => {
+      const res = await graphQLClient.request(
+        gql`
+          mutation CreateNote(
+            $issueId: NoteableID!
+            $discussionId: DiscussionID
+            $body: String!
+            $clientMutationId: String
+          ) {
+            createNote(
+              input: {
+                noteableId: $issueId
+                body: $body
+                discussionId: $discussionId
+                clientMutationId: $clientMutationId
+              }
+            ) {
+              clientMutationId
+            }
+          }
+        `,
+        {
+          issueId,
+          discussionId,
+          body,
+          clientMutationId,
+        }
+      );
+      return { issueId, discussionId, body };
+    },
+    [graphQLClient]
+  );
+}
+
+export function useMutationCreateNote() {
+  const createNote = useCreateNote();
+  const queryClient = useQueryClient();
+
+  return useMutation(createNote, {
+    onSettled: (x) => {
+      console.log("onsettled:", x);
+
+      queryClient.invalidateQueries(["issue", x?.issueId]);
+    },
+  });
 }

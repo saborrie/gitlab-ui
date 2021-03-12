@@ -10,10 +10,14 @@ const useStyles = createUseStyles({
     background: "#353840",
     boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.8)",
     backgroundSize: "cover",
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
-function Avatar({ url, color = "#353840" }) {
+function Avatar({ url, color = "#353840", size = 20, ...rest }) {
   const classes = useStyles();
 
   return (
@@ -21,9 +25,12 @@ function Avatar({ url, color = "#353840" }) {
       className={classes.root}
       style={{
         backgroundImage: `url(${url})`,
-
+        width: size,
+        height: size,
+        borderRadius: size / 2,
         // border: `2px solid ${color}`
       }}
+      {...rest}
     />
   );
 }

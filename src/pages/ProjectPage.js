@@ -349,7 +349,9 @@ function ProjectPage() {
           </Board.Root>
         </DragDropContext>
         <Drawer show={Boolean(selectedIssueId)} onFrame={scrollSelectedIssueIntoView}>
-          {selectedIssueId ? <IssueDetailsContainer issueId={selectedIssueId} /> : null}
+          {selectedIssueId ? (
+            <IssueDetailsContainer issueId={selectedIssueId} projectPath={projectPath} />
+          ) : null}
         </Drawer>
       </Layout.Content>
     </Layout.Root>

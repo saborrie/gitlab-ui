@@ -12,12 +12,12 @@ const useStyles = createUseStyles({
     boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.8)",
     width: 0,
     height: "100%",
-    width: 500,
+    width: 680,
     position: "relative",
   },
 
   inner: {
-    width: 500,
+    width: 680,
     height: "100%",
     position: "absolute",
   },
@@ -34,7 +34,7 @@ function Drawer({ show, onShow, onFrame, children }) {
 
   const props = useSpring({
     config: { ...config.stiff, clamp: true, velocity: 100 },
-    width: show ? 500 : 0,
+    width: show ? 680 : 0,
     from: { width: 0 },
     onFrame: () => {
       void onFrame?.();
