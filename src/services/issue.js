@@ -48,6 +48,18 @@ export function useQueryIssue(id) {
               }
             }
             description
+
+            currentUserTodos {
+              nodes {
+                id
+                body
+                targetType
+                action
+                state
+                createdAt
+              }
+            }
+
             discussions {
               nodes {
                 id

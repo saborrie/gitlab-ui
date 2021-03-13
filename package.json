@@ -23,7 +23,10 @@
     "react-scripts": "3.4.3",
     "react-spring": "^8.0.27",
     "react-timeago": "^5.2.0",
-    "remark-gfm": "^1.0.0"
+    "react-tracked": "^1.6.5",
+    "remark-gfm": "^1.0.0",
+    "scheduler": "^0.20.1",
+    "use-sound": "^2.0.1"
   },
   "scripts": {
     "start": "react-scripts start",

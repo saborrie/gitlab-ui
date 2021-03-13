@@ -57,6 +57,10 @@ function IssueDetailsContainer({ issueId, projectPath }) {
         {issueQuery.data?.discussions.nodes.map((discussion) => (
           <div>
             {discussion.notes.nodes.map((note, index) => {
+              const hasMatchingTodo =
+                issueQuery.data?.currentUserTodos.nodes.filter((x) => x.body === note.body).length >
+                0;
+
               if (note.system) {
                 return (
                   <BubbleHolder
@@ -90,7 +94,7 @@ function IssueDetailsContainer({ issueId, projectPath }) {
                     />
                   }
                 >
-                  <Bubble>
+                  <Bubble highlighted={hasMatchingTodo}>
                     <div>{note.author.name}</div>
                     <ReactMarkdown
                       plugins={[gfm]}

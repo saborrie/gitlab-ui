@@ -11,6 +11,8 @@ import Logo from "../components/Logo";
 import Loader from "../components/Loader";
 import Drawer from "../components/Drawer";
 
+import { usePlayNotification } from "../services/notification";
+
 import IssueDetailsContainer from "../containers/IssueDetailsContainer";
 // import Mice from "../containers/Mice";
 
@@ -35,6 +37,7 @@ function Column({ id, issues, onIssueClicked, selectedIssueId }) {
               {(dragProvided, dragSnapshot) => (
                 <Ticket
                   id={t.id}
+                  badge={t.currentUserTodos?.nodes?.length > 0}
                   onClick={(event) => {
                     event.stopPropagation();
                     onIssueClicked(t.id);
@@ -179,6 +182,8 @@ function ProjectPage() {
 
   const reorder = useMutationReorderIssue();
 
+  const playNotification = usePlayNotification();
+
   async function handleDragEnd(result) {
     if (!result.destination) {
       alert("failed.");
@@ -287,8 +292,9 @@ function ProjectPage() {
   return (
     <Layout.Root>
       <Layout.Topbar>
-        <Logo /> {project?.nameWithNamespace}
+        {project?.nameWithNamespace}
         {isFetching ? <Loader /> : null}
+        <button onClick={playNotification}>hello</button>
       </Layout.Topbar>
       <Layout.Content>
         <DragDropContext onDragEnd={handleDragEnd}>

@@ -7,8 +7,16 @@ import Loader from "../components/Loader";
 import Logo from "../components/Logo";
 
 import { useInfiniteQueryGraphProjects } from "../services/project";
+import { useAddProject } from "../services/storage";
+import Layout from "../components/Layout";
+import useDebounce from "../utils";
+import InvisibleInput from "../components/InvisibleInput";
 
 function HomePage() {
+  const [search, setSearch] = React.useState();
+
+  const debouncedSearch = useDebounce(search, 500);
+
   const {
     data,
     error,
@@ -18,7 +26,7 @@ function HomePage() {
     isFetching,
     isFetchingNextPage,
     status,
-  } = useInfiniteQueryGraphProjects();
+  } = useInfiniteQueryGraphProjects(debouncedSearch || null);
 
   React.useEffect(() => {
     function handleScroll(event) {
@@ -32,25 +40,38 @@ function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const addProject = useAddProject();
+
   if (error) {
     return <div>error.</div>;
   }
 
   return (
-    <List>
-      <Logo />
-      <h1>Projects</h1>
-      {data?.pages?.map((page) =>
-        page.nodes.map((project) => (
-          <ListItem component={Link} to={`/project/${project.fullPath}`}>
-            <ListItem.Title>{project.name}</ListItem.Title>
-            <small>
-              <br />({project.fullPath})
-            </small>
-          </ListItem>
-        ))
-      )}
-      {/* <div>
+    <Layout.Root>
+      <Layout.Topbar>
+        <InvisibleInput
+          onChange={(e) => setSearch(e.target.value)}
+          value={search}
+          placeholder="search projects"
+          autoFocus
+          style={{ flexGrow: 1 }}
+        />
+      </Layout.Topbar>
+      <Layout.Content>
+        <List>
+          {data?.pages?.map((page) =>
+            page.nodes.map((project) => (
+              <ListItem
+                component={Link}
+                onClick={() => addProject(project.fullPath)}
+                to={`/project/${project.fullPath}`}
+              >
+                <ListItem.Title>{project.name}</ListItem.Title>
+                <small>({project.fullPath})</small>
+              </ListItem>
+            ))
+          )}
+          {/* <div>
           <button onClick={() => fetchNextPage()} disabled={!hasNextPage || isFetchingNextPage}>
             {isFetchingNextPage
               ? "Loading more..."
@@ -60,8 +81,10 @@ function HomePage() {
           </button>
         </div>
         <div>{isFetching && !isFetchingNextPage ? <Loader /> : null}</div>{" "} */}
-      <div>{isFetching ? <Loader /> : null}</div>
-    </List>
+          <div>{isFetching ? <Loader /> : null}</div>
+        </List>
+      </Layout.Content>
+    </Layout.Root>
   );
 }
 

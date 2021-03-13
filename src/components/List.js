@@ -3,10 +3,12 @@ import { createUseStyles } from "react-jss";
 
 const useStyles = createUseStyles({
   root: {
-    padding: [[40, 20]],
+    padding: [[10, 20]],
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
+    // alignItems: "center",
+    flexGrow: 1,
+    overflow: "auto",
   },
 });
 

@@ -18,9 +18,18 @@ function LoginContainer() {
 
       <h2>How to create a token:</h2>
       <ol>
-        <li>Click your user in the top right corner of GitLab</li>
-        <li>Select "settings" in the dropdown</li>
-        <li>Select "Access Tokens" on the sidebar</li>
+        <li>
+          Open{" "}
+          <a style={{ color: "white" }} href="https://gitlab.com/-/profile/personal_access_tokens">
+            your access tokens page
+          </a>
+          , or:
+          <ul>
+            <li>Click your user in the top right corner of GitLab</li>
+            <li>Select "settings" in the dropdown</li>
+            <li>Select "Access Tokens" on the sidebar</li>
+          </ul>
+        </li>
         <li>Write a name for your new token and select the "api" scope</li>
         <li>Choose an expiry for your token and create it</li>
       </ol>

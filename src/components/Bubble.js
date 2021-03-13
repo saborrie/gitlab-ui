@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import React from "react";
 import { createUseStyles } from "react-jss";
 const useStyles = createUseStyles({
@@ -20,12 +21,17 @@ const useStyles = createUseStyles({
       color: "#b3c6ff",
     },
   },
+  highlighted: {
+    border: "2px solid red",
+  },
 });
 
-function Bubble({ children }) {
+function Bubble({ children, highlighted }) {
   const classes = useStyles();
 
-  return <div className={classes.root}>{children}</div>;
+  return (
+    <div className={clsx(classes.root, { [classes.highlighted]: highlighted })}>{children}</div>
+  );
 }
 
 export default Bubble;

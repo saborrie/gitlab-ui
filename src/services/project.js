@@ -216,6 +216,70 @@ export function useMutationReorderIssue() {
   });
 }
 
+export function useQueryGraphProjectLink(fullPath) {
+  const graphQLClient = useGraphQLClient();
+
+  const execute = React.useCallback(
+    async ({ queryKey }) => {
+      const [key, x] = queryKey;
+
+      const res = await graphQLClient.request(
+        gql`
+        query {
+          project(fullPath: "${x}") {
+            id
+            fullPath
+            avatarUrl
+            name
+          }
+        }
+      `
+      );
+      return res.project;
+    },
+    [graphQLClient]
+  );
+
+  return useQuery(["project-logo", fullPath], execute, { enabled: Boolean(graphQLClient) });
+}
+
+export function useQueryGraphProjectLatestTodo(id) {
+  const graphQLClient = useGraphQLClient();
+
+  const execute = React.useCallback(
+    async ({ queryKey }) => {
+      const [key, x] = queryKey;
+
+      function formatProjectId(id) {
+        return Number(id.slice("gid://gitlab/Project/".length));
+      }
+
+      const res = await graphQLClient.request(
+        gql`
+          query {
+            currentUser {
+              todos(first: 1, state: pending, projectId: "${formatProjectId(x)}") {
+                pageInfo {
+                  hasNextPage
+                }
+                nodes {
+                  createdAt
+                }
+              }
+            }
+          }
+        `
+      );
+      return res.currentUser?.todos;
+    },
+    [graphQLClient]
+  );
+
+  return useQuery(["project-latest-todo", id], execute, {
+    enabled: Boolean(graphQLClient) && Boolean(id),
+  });
+}
+
 export function useQueryGraphProject(fullPath) {
   const graphQLClient = useGraphQLClient();
 
@@ -311,6 +375,13 @@ export function useQueryGraphIssues(fullPath) {
                   milestone {
                     id
                   }
+
+                  currentUserTodos {
+                    nodes {
+                      id
+                      createdAt
+                    }
+                  }
                 }
               }
             }
@@ -339,18 +410,21 @@ export function useQueryGraphIssues(fullPath) {
   return useQuery(["project", fullPath, "issues"], execute);
 }
 
-export function useInfiniteQueryGraphProjects() {
+export function useInfiniteQueryGraphProjects(search) {
   const graphQLClient = useGraphQLClient();
 
   const execute = React.useCallback(
-    async ({ pageParam = "" }) => {
+    async ({ queryKey, pageParam = "" }) => {
+      const [key, s] = queryKey;
+
       const res = await graphQLClient.request(
         gql`
-          query {
-            projects(membership: true, after: "${pageParam}") {
+          query SearchProjects($search: String) {
+            projects(search: $search, membership: true, after: "${pageParam}") {
               nodes {
-                  fullPath
-                  name
+                id
+                fullPath
+                name
               }
               pageInfo {
                 hasNextPage
@@ -358,14 +432,17 @@ export function useInfiniteQueryGraphProjects() {
               }
             }
           }
-        `
+        `,
+        {
+          search: s,
+        }
       );
       return res.projects;
     },
     [graphQLClient]
   );
 
-  return useInfiniteQuery(["projects"], execute, {
+  return useInfiniteQuery(["projects", search], execute, {
     getNextPageParam: (lastPage, pages) => {
       if (lastPage?.pageInfo?.hasNextPage) {
         return lastPage.pageInfo.endCursor;

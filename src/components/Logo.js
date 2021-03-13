@@ -2,7 +2,13 @@ import React from "react";
 
 function Logo() {
   return (
-    <svg width="24" height="24" class="tanuki-logo" viewBox="0 0 36 36" style={{ marginRight: 16 }}>
+    <svg
+      width="24"
+      height="24"
+      class="tanuki-logo"
+      viewBox="0 0 36 36"
+      style={{ marginBottom: 12 }}
+    >
       <path
         class="tanuki-shape tanuki-left-ear"
         fill="#e24329"

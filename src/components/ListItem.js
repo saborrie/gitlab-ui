@@ -3,17 +3,20 @@ import { createUseStyles } from "react-jss";
 
 const useStyles = createUseStyles({
   root: {
-    padding: [[20, 20]],
+    padding: [[10, 10]],
     borderRadius: 2,
     background: "#353840",
     boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.4)",
-    flexGrow: 1,
+    flexGrow: 0,
     // height: 24,
-    marginBottom: 20,
+    marginBottom: 10,
     color: "white",
     textDecoration: "none",
     display: "block",
     width: 600,
+    "& *": {
+      lineHeight: 1,
+    },
   },
   title: {
     fontSize: 18,
