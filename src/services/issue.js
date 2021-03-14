@@ -49,7 +49,7 @@ export function useQueryIssue(id) {
             }
             description
 
-            currentUserTodos {
+            currentUserTodos(state:pending) {
               nodes {
                 id
                 body

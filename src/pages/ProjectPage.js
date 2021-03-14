@@ -26,6 +26,8 @@ import { update, exit, useCollaborateState } from "../services/collaborate";
 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { pickTextColorBasedOnBgColorAdvanced } from "../utils";
+import FloatingFooter from "../components/FloadingFooter";
+import FloatingFooterPill from "../components/FloatingFooterPill";
 
 function Column({ id, issues, onIssueClicked, selectedIssueId }) {
   return (
@@ -148,11 +150,14 @@ function useBoard(projectPath) {
       )
     );
 
+    const todoIssues = graphIssues?.data.filter((i) => i.currentUserTodos?.nodes?.length > 0);
+
     return {
       project: project.data,
       rows,
       columns,
       cells,
+      todoIssues,
       isFetching: graphIssues.isFetching || graphIssues.isLoading || !graphIssues.data,
     };
   }, [project.data, graphIssues]);
@@ -176,7 +181,7 @@ function ProjectPage() {
   const history = useHistory();
   const boardRef = React.useRef();
   const location = useLocation();
-  const { project, rows, cells, columns, isFetching } = useBoard(projectPath);
+  const { project, rows, cells, columns, isFetching, todoIssues } = useBoard(projectPath);
 
   const [collapsedRows, setCollapsedRows] = React.useState(null);
 
@@ -294,66 +299,86 @@ function ProjectPage() {
       <Layout.Topbar>
         {project?.nameWithNamespace}
         {isFetching ? <Loader /> : null}
-        <button onClick={playNotification}>hello</button>
+        {/* <button onClick={playNotification}>hello</button> */}
       </Layout.Topbar>
       <Layout.Content>
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Board.Root ref={boardRef} onClick={handleBoardClick}>
-            <Board.HeaderRow>
-              {columns?.map(({ id, name, color }) => (
-                <Board.ColumnHeader key={id || "none"}>
-                  <TitleCard color={color}>{name}</TitleCard>
-                </Board.ColumnHeader>
-              ))}
-            </Board.HeaderRow>
-            {rows?.map((row) => (
-              <React.Fragment key={row.id}>
-                <Board.RowHeader
-                  onClick={(event) => {
-                    event.stopPropagation();
+        <Layout.ContentArea>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Board.Root ref={boardRef} onClick={handleBoardClick}>
+              <Board.HeaderRow>
+                {columns?.map(({ id, name, color }) => (
+                  <Board.ColumnHeader key={id || "none"}>
+                    <TitleCard color={color}>{name}</TitleCard>
+                  </Board.ColumnHeader>
+                ))}
+              </Board.HeaderRow>
+              {rows?.map((row) => (
+                <React.Fragment key={row.id}>
+                  <Board.RowHeader
+                    onClick={(event) => {
+                      event.stopPropagation();
 
-                    collapsedRows?.includes(row.id)
-                      ? setCollapsedRows(collapsedRows.filter((x) => x != row.id))
-                      : setCollapsedRows([...collapsedRows, row.id]);
+                      collapsedRows?.includes(row.id)
+                        ? setCollapsedRows(collapsedRows.filter((x) => x != row.id))
+                        : setCollapsedRows([...collapsedRows, row.id]);
+                    }}
+                  >
+                    <span style={{ opacity: row.state === "closed" ? 0.4 : 1, whiteSpace: "pre" }}>
+                      {row.name}
+                      {/* {row.cells.reduce((totals, cell) => totals c.length).length} issues */}
+                      {row.state === "closed" ? "        Closed" : null}
+                    </span>
+                  </Board.RowHeader>
+                  {!collapsedRows?.includes(row.id) && (
+                    <Board.Row>
+                      {row.cells.map((rowCell, i) => {
+                        if (!rowCell.id) {
+                          console.log(row, i);
+                        }
+
+                        return (
+                          <Board.Cell key={rowCell.id}>
+                            <Column
+                              id={rowCell.id}
+                              issues={cells[rowCell.id].issues}
+                              selectedIssueId={selectedIssueId}
+                              onIssueClicked={(id) => {
+                                if (id === selectedIssueId) {
+                                  history.replace({ search: undefined });
+                                } else {
+                                  history.replace({
+                                    search: queryString.stringify({ ticket: id }),
+                                  });
+                                }
+                              }}
+                            />
+                          </Board.Cell>
+                        );
+                      })}
+                    </Board.Row>
+                  )}
+                </React.Fragment>
+              ))}
+              {/* <Mice projectPath={projectPath} /> */}
+            </Board.Root>
+          </DragDropContext>
+          {todoIssues?.length > 0 && (
+            <FloatingFooter>
+              {todoIssues?.map((t) => (
+                <FloatingFooterPill
+                  selected={t.id === selectedIssueId}
+                  onClick={() => {
+                    history.replace({
+                      search: queryString.stringify({ ticket: t.id }),
+                    });
                   }}
                 >
-                  <span style={{ opacity: row.state === "closed" ? 0.4 : 1, whiteSpace: "pre" }}>
-                    {row.name}
-                    {/* {row.cells.reduce((totals, cell) => totals c.length).length} issues */}
-                    {row.state === "closed" ? "        Closed" : null}
-                  </span>
-                </Board.RowHeader>
-                {!collapsedRows?.includes(row.id) && (
-                  <Board.Row>
-                    {row.cells.map((rowCell, i) => {
-                      if (!rowCell.id) {
-                        console.log(row, i);
-                      }
-
-                      return (
-                        <Board.Cell key={rowCell.id}>
-                          <Column
-                            id={rowCell.id}
-                            issues={cells[rowCell.id].issues}
-                            selectedIssueId={selectedIssueId}
-                            onIssueClicked={(id) => {
-                              if (id === selectedIssueId) {
-                                history.replace({ search: undefined });
-                              } else {
-                                history.replace({ search: queryString.stringify({ ticket: id }) });
-                              }
-                            }}
-                          />
-                        </Board.Cell>
-                      );
-                    })}
-                  </Board.Row>
-                )}
-              </React.Fragment>
-            ))}
-            {/* <Mice projectPath={projectPath} /> */}
-          </Board.Root>
-        </DragDropContext>
+                  #{t.iid}
+                </FloatingFooterPill>
+              ))}
+            </FloatingFooter>
+          )}
+        </Layout.ContentArea>
         <Drawer show={Boolean(selectedIssueId)} onFrame={scrollSelectedIssueIntoView}>
           {selectedIssueId ? (
             <IssueDetailsContainer issueId={selectedIssueId} projectPath={projectPath} />

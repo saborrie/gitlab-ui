@@ -376,7 +376,7 @@ export function useQueryGraphIssues(fullPath) {
                     id
                   }
 
-                  currentUserTodos {
+                  currentUserTodos(state:pending) {
                     nodes {
                       id
                       createdAt

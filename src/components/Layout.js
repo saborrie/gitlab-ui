@@ -43,6 +43,10 @@ const useStyles = createUseStyles({
     maxHeight: "calc(100% - 56px)",
     display: "flex",
   },
+  contentArea: {
+    height: "100%",
+    flexGrow: 1,
+  },
 });
 
 function App({ children }) {
@@ -69,5 +73,9 @@ function Content({ children }) {
   const classes = useStyles();
   return <div className={classes.content}>{children}</div>;
 }
+function ContentArea({ children }) {
+  const classes = useStyles();
+  return <div className={classes.contentArea}>{children}</div>;
+}
 
-export default { App, Sidebar, Root, Topbar, Content };
+export default { App, Sidebar, Root, Topbar, Content, ContentArea };
