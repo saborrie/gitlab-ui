@@ -30,6 +30,14 @@ function reducer(state, { type, payload }) {
     case "removeProject": {
       return { ...state, projects: state.projects.filter((x) => x !== payload) };
     }
+
+    case "setLastTodoDate": {
+      return {
+        ...state,
+        lastTodoDates: { ...state.lastTodoDates, [payload.fullPath]: payload.value },
+      };
+    }
+
     default: {
       return state;
     }
@@ -59,5 +67,15 @@ export function useSavedProjects() {
   return projects;
 }
 
+export function useLastTodoDate(fullPath) {
+  const [{ lastTodoDates }] = useTracked();
+  return lastTodoDates?.[fullPath] ?? null;
+}
+
 export const useAddProject = createUseAction("addProject", (id) => id);
 export const useRemoveProject = createUseAction("removeProject", (id) => id);
+
+export const useSetLastTodoDate = createUseAction("setLastTodoDate", (fullPath, value) => ({
+  fullPath,
+  value,
+}));

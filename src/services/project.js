@@ -277,6 +277,7 @@ export function useQueryGraphProjectLatestTodo(id) {
 
   return useQuery(["project-latest-todo", id], execute, {
     enabled: Boolean(graphQLClient) && Boolean(id),
+    refetchInterval: 30 * 1000,
   });
 }
 
