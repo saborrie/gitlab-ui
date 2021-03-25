@@ -1,7 +1,11 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import gfm from "remark-gfm";
-import { useMutationCreateNote, useQueryIssue } from "../services/issue";
+import {
+  useMutationCreateNote,
+  useMutationUpdateIssueState,
+  useQueryIssue,
+} from "../services/issue";
 import Timeago from "react-timeago";
 
 import Loader from "../components/Loader";
@@ -16,6 +20,9 @@ import InfoBubble from "../components/InfoBubble";
 import SystemIcons from "../components/SystemIcons";
 import InvisibleInput from "../components/InvisibleInput";
 import CreateNote from "./CreateNote";
+import DrawerSection from "../components/DrawerSection";
+import PillButton from "../components/PillButton";
+import IssueStateButton from "./IssueStateButton";
 
 function IssueDetailsContainer({ issueId, projectPath }) {
   const issueQuery = useQueryIssue(issueId, { enabled: Boolean(issueId) });
@@ -24,7 +31,23 @@ function IssueDetailsContainer({ issueId, projectPath }) {
 
   return (
     <Scrollbars>
-      <div style={{ paddingLeft: 24, paddingTop: 10, paddingRight: 10, paddingBottom: 24 }}>
+      <DrawerSection flex>
+        {/* <PillButton>
+          <Loader />
+        </PillButton> */}
+        {issueQuery.data && <IssueStateButton issueId={issueId} projectPath={projectPath} />}
+        <DrawerSection.Spacer grow />
+        {issueQuery.data &&
+          issueQuery.data.assignees?.nodes?.map((n) => (
+            <>
+              {n.name}
+              <DrawerSection.Spacer />
+
+              <Avatar size={32} url={`https://gitlab.com${n.avatarUrl}`} />
+            </>
+          ))}
+      </DrawerSection>
+      <DrawerSection>
         <h1>{issueQuery.data?.title}</h1>
         <small>{issueQuery.data?.reference}</small>
         <br />
@@ -150,7 +173,7 @@ function IssueDetailsContainer({ issueId, projectPath }) {
             <CreateNote issueId={issueId} />
           </Bubble>
         </BubbleHolder>
-      </div>
+      </DrawerSection>
     </Scrollbars>
   );
 }

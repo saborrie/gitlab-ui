@@ -13,6 +13,7 @@ import Drawer from "../components/Drawer";
 
 import { usePlayNotification } from "../services/notification";
 
+import NewIssueContainer from "../containers/NewIssueContainer";
 import IssueDetailsContainer from "../containers/IssueDetailsContainer";
 // import Mice from "../containers/Mice";
 
@@ -28,35 +29,27 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { pickTextColorBasedOnBgColorAdvanced } from "../utils";
 import FloatingFooter from "../components/FloadingFooter";
 import FloatingFooterPill from "../components/FloatingFooterPill";
+import AddButton from "../components/AddButton";
+import NewTicketButton from "../components/NewTicketButton";
+import SystemIcons from "../components/SystemIcons";
+import useLoadSettings from "../services/useLoadSettings";
+import PillButton from "../components/PillButton";
 
-function Column({ id, issues, onIssueClicked, selectedIssueId }) {
+function Column({ id, issues, onIssueClicked, selectedIssueId, newTicketButton, isListMode }) {
   return (
     <Droppable droppableId={id} type="column">
       {(dropProvided, dropSnapshot) => (
         <Dropzone ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
           {issues?.map((t, i) => (
             <Draggable draggableId={`${t.iid}`} index={i} key={t.id}>
-              {(dragProvided, dragSnapshot) => (
-                <Ticket
-                  id={t.id}
-                  badge={t.currentUserTodos?.nodes?.length > 0}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onIssueClicked(t.id);
-                  }}
-                  faded={t.state === "closed"}
-                  selected={t.id === selectedIssueId}
-                  ref={dragProvided.innerRef}
-                  {...dragProvided.draggableProps}
-                  {...dragProvided.dragHandleProps}
-                >
-                  {/* {t.reference} {t.isSaving && <span style={{ color: "red" }}>saving...</span>} */}
+              {(dragProvided, dragSnapshot) => {
+                const content = isListMode ? (
+                  <>
+                    <Ticket.Info>
+                      <span style={{ width: 80, fontSize: 16 }}>{t.reference}</span>
+                      <span style={{ fontSize: 16 }}>{t.title}</span>
+                      <Ticket.Spacer />
 
-                  <Ticket.Content>
-                    {t.title}
-                    <br />
-                    <br />
-                    <small>
                       {t.labels?.map((x) => (
                         <span
                           style={{
@@ -70,39 +63,109 @@ function Column({ id, issues, onIssueClicked, selectedIssueId }) {
                           {x.title}
                         </span>
                       ))}
-                    </small>
-                  </Ticket.Content>
-                  <Ticket.Spacer />
-                  <Ticket.Info>
-                    {t.reference} {t.isSaving && <span>saving...</span>}
+
+                      <span style={{ width: 40, display: "flex", justifyContent: "flex-end" }}>
+                        {t.assignees?.nodes?.map((n) => (
+                          <Avatar url={`https://gitlab.com${n.avatarUrl}`} />
+                        ))}
+                      </span>
+                    </Ticket.Info>
+                  </>
+                ) : (
+                  <>
+                    <Ticket.Content>
+                      {t.title}
+                      <br />
+                      <br />
+                      <small>
+                        {t.labels?.map((x) => (
+                          <span
+                            style={{
+                              padding: 2,
+                              marginRight: 4,
+                              borderRadius: 2,
+                              background: x.color,
+                              color: pickTextColorBasedOnBgColorAdvanced(
+                                x.color,
+                                "#f0f0f0",
+                                "black"
+                              ),
+                            }}
+                          >
+                            {x.title}
+                          </span>
+                        ))}
+                      </small>
+                    </Ticket.Content>
                     <Ticket.Spacer />
-                    {t.assignees?.nodes?.map((n) => (
-                      <Avatar url={`https://gitlab.com${n.avatarUrl}`} />
-                    ))}
-                  </Ticket.Info>
-                </Ticket>
-              )}
+                    <Ticket.Info>
+                      {t.reference} {t.isSaving && <span>saving...</span>}
+                      <Ticket.Spacer />
+                      {t.assignees?.nodes?.map((n) => (
+                        <Avatar url={`https://gitlab.com${n.avatarUrl}`} />
+                      ))}
+                    </Ticket.Info>
+                  </>
+                );
+
+                return (
+                  <Ticket
+                    isListMode={isListMode}
+                    id={t.id}
+                    badge={t.currentUserTodos?.nodes?.length > 0}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onIssueClicked(t.id);
+                    }}
+                    faded={t.state === "closed"}
+                    selected={t.id === selectedIssueId}
+                    ref={dragProvided.innerRef}
+                    {...dragProvided.draggableProps}
+                    {...dragProvided.dragHandleProps}
+                  >
+                    {/* {t.reference} {t.isSaving && <span style={{ color: "red" }}>saving...</span>} */}
+                    {content}
+                  </Ticket>
+                );
+              }}
             </Draggable>
           ))}
           {dropProvided.placeholder}
+          {newTicketButton}
         </Dropzone>
       )}
     </Droppable>
   );
 }
 
-function useBoard(projectPath) {
+function useBoard(projectPath, { isListMode }) {
   const project = useQueryGraphProject(projectPath);
   const graphIssues = useQueryGraphIssues(projectPath);
-
-  console.log({ graphIssues });
+  const settings = useLoadSettings(project.data?.id);
 
   return React.useMemo(() => {
-    if (!project.data || !graphIssues.data) {
+    if (!project.data || !graphIssues.data || settings === null) {
       return {};
     }
 
-    const labels = project.data?.labels.nodes;
+    const labels = isListMode
+      ? []
+      : project.data?.labels.nodes
+          .filter((node) => {
+            if (settings.labels) {
+              return settings.labels.includes(node.title);
+            }
+
+            return true;
+          })
+          .sort((a, b) => {
+            if (settings.labels) {
+              return settings.labels.indexOf(a.title) - settings.labels.indexOf(b.title);
+            }
+
+            return 0;
+          });
+
     const milestones = project.data?.milestones.nodes;
 
     const columns = [
@@ -142,7 +205,10 @@ function useBoard(projectPath) {
                 const matchesMilestone = i.milestone?.id === milestone?.id;
                 const matchesLabel = label
                   ? i.labels.findIndex((l) => l.title === label?.title) !== -1
-                  : !Boolean(i.labels?.length);
+                  : !Boolean(i.labels?.length) ||
+                    labels.findIndex(
+                      (l) => i.labels.findIndex((il) => il.title === l.title) === -1
+                    );
 
                 return matchesMilestone && matchesLabel;
               }),
@@ -160,7 +226,7 @@ function useBoard(projectPath) {
       todoIssues,
       isFetching: graphIssues.isFetching || graphIssues.isLoading || !graphIssues.data,
     };
-  }, [project.data, graphIssues]);
+  }, [project.data, graphIssues, settings]);
 }
 
 function isInViewport(elem, container) {
@@ -172,7 +238,6 @@ function isInViewport(elem, container) {
     bounding.bottom <= (container.clientHeight || document.documentElement.clientHeight) &&
     bounding.right <= (container.clientWidth || document.documentElement.clientWidth);
 
-  console.log({ bounding, container, result });
   return result;
 }
 
@@ -181,7 +246,14 @@ function ProjectPage() {
   const history = useHistory();
   const boardRef = React.useRef();
   const location = useLocation();
-  const { project, rows, cells, columns, isFetching, todoIssues } = useBoard(projectPath);
+
+  const [showClosedMileStones, setShowClosedMileStones] = React.useState(true);
+  const [showClosedIssues, setShowClosedIssues] = React.useState(true);
+  const [isListMode, setIsListMode] = React.useState(false);
+
+  const { project, rows, cells, columns, isFetching, todoIssues } = useBoard(projectPath, {
+    isListMode,
+  });
 
   const [collapsedRows, setCollapsedRows] = React.useState(null);
 
@@ -242,6 +314,8 @@ function ProjectPage() {
   }
 
   const selectedIssueId = queryString.parse(location.search).ticket || undefined;
+  const selectedLabelId = queryString.parse(location.search).label || undefined;
+  const selectedMilestoneId = queryString.parse(location.search).milestone || undefined;
 
   function scrollSelectedIssueIntoView() {
     if (collapsedRows && selectedIssueId) {
@@ -249,7 +323,6 @@ function ProjectPage() {
 
       // setTimeout(() => {
       if (element && boardRef.current && !isInViewport(element, boardRef.current)) {
-        console.log("scrolling.");
         // element.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
         element.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
       }
@@ -299,66 +372,124 @@ function ProjectPage() {
       <Layout.Topbar>
         {project?.nameWithNamespace}
         {isFetching ? <Loader /> : null}
-        {/* <button onClick={playNotification}>hello</button> */}
+        <Layout.TopbarSpacer grow />
+        <PillButton
+          onClick={() => setShowClosedMileStones(!showClosedMileStones)}
+          color={!showClosedMileStones ? "#ffffff" : undefined}
+        >
+          {showClosedMileStones ? "Showing" : "Hiding"} closed milestones
+        </PillButton>
+        <Layout.TopbarSpacer />
+        <PillButton
+          onClick={() => setShowClosedIssues(!showClosedIssues)}
+          color={!showClosedIssues ? "#ffffff" : undefined}
+        >
+          {showClosedIssues ? "Showing" : "Hiding"} closed issues
+        </PillButton>
+        <Layout.TopbarSpacer />
+        <PillButton
+          onClick={() => setIsListMode(!isListMode)}
+          color={isListMode ? "#ffffff" : undefined}
+        >
+          {isListMode ? "List mode" : "Map mode"}
+        </PillButton>
       </Layout.Topbar>
       <Layout.Content>
         <Layout.ContentArea>
           <DragDropContext onDragEnd={handleDragEnd}>
             <Board.Root ref={boardRef} onClick={handleBoardClick}>
               <Board.HeaderRow>
-                {columns?.map(({ id, name, color }) => (
-                  <Board.ColumnHeader key={id || "none"}>
-                    <TitleCard color={color}>{name}</TitleCard>
-                  </Board.ColumnHeader>
-                ))}
+                {isListMode ? (
+                  <Board.ColumnHeader />
+                ) : (
+                  columns?.map(({ id, name, color }) => (
+                    <Board.ColumnHeader key={id || "none"}>
+                      <TitleCard color={color}>{name}</TitleCard>
+                    </Board.ColumnHeader>
+                  ))
+                )}
               </Board.HeaderRow>
-              {rows?.map((row) => (
-                <React.Fragment key={row.id}>
-                  <Board.RowHeader
-                    onClick={(event) => {
-                      event.stopPropagation();
+              {rows
+                ?.filter((row) => showClosedMileStones || row.state !== "closed")
+                ?.map((row) => (
+                  <React.Fragment key={row.id}>
+                    <Board.RowHeader
+                      onClick={(event) => {
+                        event.stopPropagation();
 
-                      collapsedRows?.includes(row.id)
-                        ? setCollapsedRows(collapsedRows.filter((x) => x != row.id))
-                        : setCollapsedRows([...collapsedRows, row.id]);
-                    }}
-                  >
-                    <span style={{ opacity: row.state === "closed" ? 0.4 : 1, whiteSpace: "pre" }}>
-                      {row.name}
-                      {/* {row.cells.reduce((totals, cell) => totals c.length).length} issues */}
-                      {row.state === "closed" ? "        Closed" : null}
-                    </span>
-                  </Board.RowHeader>
-                  {!collapsedRows?.includes(row.id) && (
-                    <Board.Row>
-                      {row.cells.map((rowCell, i) => {
-                        if (!rowCell.id) {
-                          console.log(row, i);
-                        }
+                        collapsedRows?.includes(row.id)
+                          ? setCollapsedRows(collapsedRows.filter((x) => x != row.id))
+                          : setCollapsedRows([...collapsedRows, row.id]);
+                      }}
+                    >
+                      <span
+                        style={{ opacity: row.state === "closed" ? 0.4 : 1, whiteSpace: "pre" }}
+                      >
+                        {row.name}
+                        {/* {row.cells.reduce((totals, cell) => totals c.length).length} issues */}
+                        {row.state === "closed" ? "        Closed" : null}
+                      </span>
+                    </Board.RowHeader>
+                    {!collapsedRows?.includes(row.id) && (
+                      <Board.Row>
+                        {row.cells.map((rowCell, i) => {
+                          const Cell = isListMode ? Board.ListCell : Board.Cell;
 
-                        return (
-                          <Board.Cell key={rowCell.id}>
-                            <Column
-                              id={rowCell.id}
-                              issues={cells[rowCell.id].issues}
-                              selectedIssueId={selectedIssueId}
-                              onIssueClicked={(id) => {
-                                if (id === selectedIssueId) {
-                                  history.replace({ search: undefined });
-                                } else {
-                                  history.replace({
-                                    search: queryString.stringify({ ticket: id }),
-                                  });
+                          return (
+                            <Cell key={rowCell.id} isListMode={isListMode}>
+                              <Column
+                                isListMode={isListMode}
+                                id={rowCell.id}
+                                issues={cells[rowCell.id].issues.filter(
+                                  (t) => showClosedIssues || t.state !== "closed"
+                                )}
+                                selectedIssueId={selectedIssueId}
+                                onIssueClicked={(id) => {
+                                  if (id === selectedIssueId) {
+                                    history.replace({ search: undefined });
+                                  } else {
+                                    history.replace({
+                                      search: queryString.stringify({ ticket: id }),
+                                    });
+                                  }
+                                }}
+                                newTicketButton={
+                                  <NewTicketButton
+                                    isListMode={isListMode}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+
+                                      const label = rowCell.label?.id || undefined;
+                                      const milestone = rowCell.milestone?.id || undefined;
+
+                                      if (
+                                        "new" === selectedIssueId &&
+                                        label === selectedLabelId &&
+                                        milestone === selectedMilestoneId
+                                      ) {
+                                        history.replace({ search: undefined });
+                                      } else {
+                                        history.replace({
+                                          search: queryString.stringify({
+                                            ticket: "new",
+                                            label,
+                                            milestone,
+                                          }),
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    <SystemIcons color="#2c2e35" name="plus" />
+                                  </NewTicketButton>
                                 }
-                              }}
-                            />
-                          </Board.Cell>
-                        );
-                      })}
-                    </Board.Row>
-                  )}
-                </React.Fragment>
-              ))}
+                              />
+                            </Cell>
+                          );
+                        })}
+                      </Board.Row>
+                    )}
+                  </React.Fragment>
+                ))}
               {/* <Mice projectPath={projectPath} /> */}
             </Board.Root>
           </DragDropContext>
@@ -379,9 +510,17 @@ function ProjectPage() {
             </FloatingFooter>
           )}
         </Layout.ContentArea>
-        <Drawer show={Boolean(selectedIssueId)} onFrame={scrollSelectedIssueIntoView}>
+        <Drawer show={isListMode || Boolean(selectedIssueId)} onFrame={scrollSelectedIssueIntoView}>
           {selectedIssueId ? (
-            <IssueDetailsContainer issueId={selectedIssueId} projectPath={projectPath} />
+            selectedIssueId === "new" ? (
+              <NewIssueContainer
+                milestoneId={selectedMilestoneId}
+                labelId={selectedLabelId}
+                projectPath={projectPath}
+              />
+            ) : (
+              <IssueDetailsContainer issueId={selectedIssueId} projectPath={projectPath} />
+            )
           ) : null}
         </Drawer>
       </Layout.Content>

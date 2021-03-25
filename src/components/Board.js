@@ -31,7 +31,12 @@ const useStyles = createUseStyles({
   },
   cell: {
     width: 280,
-    minHeight: 220,
+    // minHeight: 220,
+    flexShrink: 0,
+  },
+  listCell: {
+    width: "100%",
+    // minHeight: 220,
     flexShrink: 0,
   },
   headerRow: {
@@ -105,6 +110,10 @@ function Cell({ children }) {
   const classes = useStyles();
   return <div className={classes.cell}>{children}</div>;
 }
+function ListCell({ children }) {
+  const classes = useStyles();
+  return <div className={classes.listCell}>{children}</div>;
+}
 function HeaderRow({ children }) {
   const classes = useStyles();
   return <div className={classes.headerRow}>{children}</div>;
@@ -114,4 +123,4 @@ function ColumnHeader({ children }) {
   return <div className={classes.columHeader}>{children}</div>;
 }
 
-export default { Root, Row, RowHeader, Cell, HeaderRow, ColumnHeader };
+export default { Root, Row, RowHeader, ListCell, Cell, HeaderRow, ColumnHeader };

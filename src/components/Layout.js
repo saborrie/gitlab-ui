@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import React from "react";
 import { createUseStyles } from "react-jss";
 
@@ -38,6 +39,12 @@ const useStyles = createUseStyles({
     padding: [[0, 24]],
     backgroundColor: "#2a2c32",
   },
+  topbarSpacer: {
+    width: 20,
+  },
+  topBarSpacerGrow: {
+    flexGrow: 1,
+  },
   content: {
     flexGrow: 1,
     maxHeight: "calc(100% - 56px)",
@@ -69,6 +76,11 @@ function Topbar({ children }) {
   return <div className={classes.topbar}>{children}</div>;
 }
 
+function TopbarSpacer({ grow }) {
+  const classes = useStyles();
+  return <div className={clsx(classes.topbarSpacer, { [classes.topBarSpacerGrow]: grow })} />;
+}
+
 function Content({ children }) {
   const classes = useStyles();
   return <div className={classes.content}>{children}</div>;
@@ -78,4 +90,4 @@ function ContentArea({ children }) {
   return <div className={classes.contentArea}>{children}</div>;
 }
 
-export default { App, Sidebar, Root, Topbar, Content, ContentArea };
+export default { App, Sidebar, Root, Topbar, TopbarSpacer, Content, ContentArea };

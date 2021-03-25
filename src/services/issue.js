@@ -30,9 +30,12 @@ export function useQueryIssue(id) {
         query {
           issue(id:"${x}") {
             id
+            iid
             title
+            state
             assignees{
               nodes {
+                avatarUrl
                 name
               }
             }
@@ -138,9 +141,70 @@ export function useMutationCreateNote() {
 
   return useMutation(createNote, {
     onSettled: (x) => {
-      console.log("onsettled:", x);
-
       queryClient.invalidateQueries(["issue", x?.issueId]);
+    },
+  });
+}
+
+function useUpdateIssueState() {
+  const graphQLClient = useGraphQLClient();
+
+  return React.useCallback(
+    async ({ projectPath, iid, stateEvent }) => {
+      const res = await graphQLClient.request(
+        gql`
+          mutation ChangeIssueState(
+            $projectPath: ID!
+            $iid: String!
+            $stateEvent: IssueStateEvent!
+          ) {
+            updateIssue(input: { projectPath: $projectPath, stateEvent: $stateEvent, iid: $iid }) {
+              issue {
+                id
+                state
+              }
+            }
+          }
+        `,
+        {
+          projectPath,
+          iid,
+          stateEvent,
+        }
+      );
+      return { projectPath, iid, issueId: res.updateIssue?.issue?.id };
+    },
+    [graphQLClient]
+  );
+}
+
+export function useMutationUpdateIssueState() {
+  const updateIssueState = useUpdateIssueState();
+  const queryClient = useQueryClient();
+
+  return useMutation(updateIssueState, {
+    onMutate: ({ issueId, stateEvent }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      queryClient.cancelQueries(["issue", issueId]);
+
+      // Snapshot the previous value
+      const previousIssueData = queryClient.getQueryData(["issue", issueId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["issue", issueId], {
+        ...previousIssueData,
+        state: stateEvent === "CLOSE" ? "closed" : "opened",
+      });
+
+      // Return a rollback function
+      return () => queryClient.setQueryData(["issue", issueId], previousIssueData);
+    },
+
+    onError: (err, data, rollback) => rollback(),
+
+    onSettled: (x) => {
+      queryClient.invalidateQueries(["issue", x?.issueId]);
+      queryClient.invalidateQueries(["project", x?.projectPath, "issues"]);
     },
   });
 }

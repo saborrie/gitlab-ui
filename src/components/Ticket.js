@@ -7,9 +7,7 @@ const useStyles = createUseStyles({
     padding: [20, 20, 0],
     flexGrow: 1,
     height: 160,
-    "&:last-child": {
-      marginBottom: 20,
-    },
+
     zIndex: 0,
   },
   box: {
@@ -71,17 +69,35 @@ const useStyles = createUseStyles({
     borderRadius: 6,
     border: "2px solid #1c1d21",
   },
+  listMode: {
+    height: 40,
+    padding: "0 20px",
+    "&:first-child": {
+      marginTop: 20,
+    },
+  },
 });
 
 const Ticket = React.forwardRef(function Ticket(
-  { children, badge, faded, selected, ...rest },
+  { children, badge, faded, selected, isListMode, ...rest },
   ref
 ) {
   const classes = useStyles();
 
   return (
-    <div ref={ref} className={classes.root} {...rest}>
-      <div className={clsx(classes.box, { [classes.faded]: faded, [classes.selected]: selected })}>
+    <div
+      ref={ref}
+      className={clsx(classes.root, {
+        [classes.listMode]: isListMode,
+      })}
+      {...rest}
+    >
+      <div
+        className={clsx(classes.box, {
+          [classes.faded]: faded,
+          [classes.selected]: selected,
+        })}
+      >
         <div className={classes.inner}>{children}</div>
         {badge && <div className={classes.badge}></div>}
       </div>

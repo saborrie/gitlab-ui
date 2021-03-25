@@ -14,7 +14,6 @@ function SidebarProjectButton({ fullPath }) {
   const play = usePlayNotification();
 
   const hasTodo = Array.isArray(todosQuery.data?.nodes) && todosQuery.data?.nodes.length > 0;
-  console.log(todosQuery.data?.nodes, Array.isArray(todosQuery.data?.nodes));
 
   React.useEffect(() => {
     // calculate the current todo date:
@@ -28,15 +27,6 @@ function SidebarProjectButton({ fullPath }) {
         play();
         setLastTodoDate(fullPath, newTodoDate);
       }
-    } else {
-      console.log({
-        todosQuery,
-        newTodoDate,
-        lastTodoDate,
-        newTodoDateTime,
-        lastTodoDateTime,
-        compare: newTodoDateTime > lastTodoDateTime,
-      });
     }
   }, [todosQuery.dataUpdatedAt, lastTodoDate]);
 
