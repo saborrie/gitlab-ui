@@ -1,6 +1,7 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import gfm from "remark-gfm";
+import stripHtmlComments from "strip-html-comments";
 import {
   useMutationCreateNote,
   useMutationUpdateIssueState,
@@ -69,7 +70,7 @@ function IssueDetailsContainer({ issueId, projectPath }) {
           plugins={[gfm]}
           transformImageUri={(i) => `https://gitlab.com/${projectPath}${i}`}
         >
-          {issueQuery.data?.description}
+          {stripHtmlComments(issueQuery.data?.description ?? "")}
         </ReactMarkdown>
         <br />
         <br />
@@ -123,7 +124,7 @@ function IssueDetailsContainer({ issueId, projectPath }) {
                       plugins={[gfm]}
                       transformImageUri={(i) => `https://gitlab.com/${projectPath}${i}`}
                     >
-                      {note.body}
+                      {stripHtmlComments(note.body ?? "")}
                     </ReactMarkdown>
                   </Bubble>
                   <BubbleFooter>

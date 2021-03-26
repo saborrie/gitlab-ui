@@ -27,6 +27,7 @@
     "react-tracked": "^1.6.5",
     "remark-gfm": "^1.0.0",
     "scheduler": "^0.20.1",
+    "strip-html-comments": "^1.0.0",
     "use-sound": "^2.0.1",
     "yaml": "^1.10.2"
   },
