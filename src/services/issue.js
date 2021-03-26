@@ -208,3 +208,62 @@ export function useMutationUpdateIssueState() {
     },
   });
 }
+
+function useCreateIssue() {
+  const graphQLClient = useGraphQLClient();
+
+  return React.useCallback(
+    async ({ projectPath, title, description, labelIds = [], milstoneId, assigneeIds = [] }) => {
+      const res = await graphQLClient.request(
+        gql`
+          mutation CreateIssue(
+            $title: String!
+            $description: String!
+            $labelIds: [LabelID!]
+            $milestoneId: MilestoneID
+            $projectPath: ID!
+            $assigneeIds: [UserID!]
+          ) {
+            createIssue(
+              input: {
+                title: $title
+                description: $description
+                labelIds: $labelIds
+                milestoneId: $milestoneId
+                projectPath: $projectPath
+                assigneeIds: $assigneeIds
+              }
+            ) {
+              issue {
+                id
+                iid
+                title
+              }
+            }
+          }
+        `,
+        {
+          projectPath,
+          title,
+          description,
+          labelIds,
+          milstoneId,
+          assigneeIds,
+        }
+      );
+      return { projectPath, issueId: res.createIssue?.issue?.id };
+    },
+    [graphQLClient]
+  );
+}
+
+export function useMutationCreateIssue() {
+  const createIssue = useCreateIssue();
+  const queryClient = useQueryClient();
+
+  return useMutation(createIssue, {
+    onSettled: (x) => {
+      queryClient.invalidateQueries(["project", x?.projectPath, "issues"]);
+    },
+  });
+}

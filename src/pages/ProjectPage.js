@@ -208,7 +208,7 @@ function useBoard(projectPath, { isListMode }) {
                   : !Boolean(i.labels?.length) ||
                     labels.findIndex(
                       (l) => i.labels.findIndex((il) => il.title === l.title) === -1
-                    );
+                    ) === -1;
 
                 return matchesMilestone && matchesLabel;
               }),
@@ -517,6 +517,11 @@ function ProjectPage() {
                 milestoneId={selectedMilestoneId}
                 labelId={selectedLabelId}
                 projectPath={projectPath}
+                goToIssue={(issueId) => {
+                  history.replace({
+                    search: queryString.stringify({ ticket: issueId }),
+                  });
+                }}
               />
             ) : (
               <IssueDetailsContainer issueId={selectedIssueId} projectPath={projectPath} />
