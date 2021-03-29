@@ -259,7 +259,7 @@ function ProjectPage() {
 
   const reorder = useMutationReorderIssue();
 
-  const playNotification = usePlayNotification();
+  const filterIssues = (t) => showClosedIssues || t.state !== "closed";
 
   async function handleDragEnd(result) {
     if (!result.destination) {
@@ -267,7 +267,9 @@ function ProjectPage() {
       return;
     }
 
-    const issue = cells[result.source?.droppableId].issues[result.source.index];
+    const issue = cells[result.source?.droppableId].issues.filter(filterIssues)[
+      result.source.index
+    ];
     let offset = 0;
 
     if (
@@ -280,8 +282,10 @@ function ProjectPage() {
     const cellBefore = cells[result.source?.droppableId];
     const cellAfter = cells[result.destination?.droppableId];
 
-    const issueBefore = cellBefore.issues[result.destination.index - 1 + offset];
-    const issueAfter = cellAfter.issues[result.destination.index + offset];
+    const issueBefore = cellBefore.issues.filter(filterIssues)[
+      result.destination.index - 1 + offset
+    ];
+    const issueAfter = cellAfter.issues.filter(filterIssues)[result.destination.index + offset];
 
     const labelBefore = cellBefore.label;
     const labelAfter = cellAfter.label;
