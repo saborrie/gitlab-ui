@@ -35,7 +35,16 @@ import SystemIcons from "../components/SystemIcons";
 import useLoadSettings from "../services/useLoadSettings";
 import PillButton from "../components/PillButton";
 
-function Column({ id, issues, onIssueClicked, selectedIssueId, newTicketButton, isListMode }) {
+function Column({
+  id,
+  issues,
+  onIssueClicked,
+  selectedIssueId,
+  newTicketButton,
+  filterLabels,
+  isListMode,
+  label,
+}) {
   return (
     <Droppable droppableId={id} type="column">
       {(dropProvided, dropSnapshot) => (
@@ -78,23 +87,25 @@ function Column({ id, issues, onIssueClicked, selectedIssueId, newTicketButton, 
                       <br />
                       <br />
                       <small>
-                        {t.labels?.map((x) => (
-                          <span
-                            style={{
-                              padding: 2,
-                              marginRight: 4,
-                              borderRadius: 2,
-                              background: x.color,
-                              color: pickTextColorBasedOnBgColorAdvanced(
-                                x.color,
-                                "#f0f0f0",
-                                "black"
-                              ),
-                            }}
-                          >
-                            {x.title}
-                          </span>
-                        ))}
+                        {t.labels
+                          ?.filter((x) => !Boolean(label) || x.id !== label?.id)
+                          ?.map((x) => (
+                            <span
+                              style={{
+                                padding: 2,
+                                marginRight: 4,
+                                borderRadius: 2,
+                                background: x.color,
+                                color: pickTextColorBasedOnBgColorAdvanced(
+                                  x.color,
+                                  "#f0f0f0",
+                                  "black"
+                                ),
+                              }}
+                            >
+                              {x.title}
+                            </span>
+                          ))}
                       </small>
                     </Ticket.Content>
                     <Ticket.Spacer />
@@ -442,6 +453,7 @@ function ProjectPage() {
                           return (
                             <Cell key={rowCell.id} isListMode={isListMode}>
                               <Column
+                                label={rowCell.label}
                                 isListMode={isListMode}
                                 id={rowCell.id}
                                 issues={cells[rowCell.id].issues.filter(
