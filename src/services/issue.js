@@ -213,7 +213,7 @@ function useCreateIssue() {
   const graphQLClient = useGraphQLClient();
 
   return React.useCallback(
-    async ({ projectPath, title, description, labelIds = [], milstoneId, assigneeIds = [] }) => {
+    async ({ projectPath, title, description, labelIds = [], milestoneId, assigneeIds = [] }) => {
       const res = await graphQLClient.request(
         gql`
           mutation CreateIssue(
@@ -247,7 +247,7 @@ function useCreateIssue() {
           title,
           description,
           labelIds,
-          milstoneId,
+          milestoneId,
           assigneeIds,
         }
       );
