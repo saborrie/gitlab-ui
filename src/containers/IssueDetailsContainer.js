@@ -50,7 +50,11 @@ function IssueDetailsContainer({ issueId, projectPath }) {
       </DrawerSection>
       <DrawerSection>
         <h1>{issueQuery.data?.title}</h1>
-        <small>{issueQuery.data?.reference}</small>
+        <small>
+          <a href={`https://gitlab.com/${projectPath}/-/issues/${issueQuery.data?.iid}`}>
+            {issueQuery.data?.reference}
+          </a>
+        </small>
         <br />
         <br />
         {issueQuery.data?.labels.nodes?.map((x) => (

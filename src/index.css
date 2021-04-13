@@ -12,6 +12,10 @@ body,
   color: #e0e0e0;
 }
 
+a {
+  color: #b3c6ff;
+}
+
 body {
   overscroll-behavior-y: none;
   overscroll-behavior-x: none;
