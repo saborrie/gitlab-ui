@@ -210,7 +210,7 @@ function useBoard(projectPath, { isListMode }) {
             id,
             milestone,
             label,
-            issues: graphIssues?.data
+            issues: [...graphIssues?.data]
               ?.sort((a, b) => a.relativePosition - b.relativePosition)
               ?.filter((i) => {
                 const matchesMilestone = i.milestone?.id === milestone?.id;
@@ -278,9 +278,8 @@ function ProjectPage() {
       return;
     }
 
-    const issue = cells[result.source?.droppableId].issues.filter(filterIssues)[
-      result.source.index
-    ];
+    const issue =
+      cells[result.source?.droppableId].issues.filter(filterIssues)[result.source.index];
     let offset = 0;
 
     if (
@@ -293,9 +292,8 @@ function ProjectPage() {
     const cellBefore = cells[result.source?.droppableId];
     const cellAfter = cells[result.destination?.droppableId];
 
-    const issueBefore = cellBefore.issues.filter(filterIssues)[
-      result.destination.index - 1 + offset
-    ];
+    const issueBefore =
+      cellBefore.issues.filter(filterIssues)[result.destination.index - 1 + offset];
     const issueAfter = cellAfter.issues.filter(filterIssues)[result.destination.index + offset];
 
     const labelBefore = cellBefore.label;
@@ -540,7 +538,11 @@ function ProjectPage() {
                 }}
               />
             ) : (
-              <IssueDetailsContainer issueId={selectedIssueId} projectPath={projectPath} />
+              <IssueDetailsContainer
+                issueId={selectedIssueId}
+                projectPath={projectPath}
+                projectId={project?.id}
+              />
             )
           ) : null}
         </Drawer>

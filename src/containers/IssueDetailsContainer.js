@@ -24,9 +24,13 @@ import CreateNote from "./CreateNote";
 import DrawerSection from "../components/DrawerSection";
 import PillButton from "../components/PillButton";
 import IssueStateButton from "./IssueStateButton";
+import useLoadSettings from "../services/useLoadSettings";
+import IssueLabelButton from "./IssueLabelButton";
 
-function IssueDetailsContainer({ issueId, projectPath }) {
+function IssueDetailsContainer({ issueId, projectPath, projectId }) {
   const issueQuery = useQueryIssue(issueId, { enabled: Boolean(issueId) });
+
+  const settings = useLoadSettings(projectId);
 
   if (issueQuery.isLoading) return <Loader />;
 
@@ -57,18 +61,43 @@ function IssueDetailsContainer({ issueId, projectPath }) {
         </small>
         <br />
         <br />
-        {issueQuery.data?.labels.nodes?.map((x) => (
-          <span
-            style={{
-              padding: "4px 8px",
-              marginRight: 4,
-              borderRadius: 2,
-              background: x.color,
-              color: pickTextColorBasedOnBgColorAdvanced(x.color, "#f0f0f0", "black"),
-            }}
-          >
-            {x.title}
-          </span>
+        <div>
+          <h2>Labels</h2>
+          {issueQuery.data?.labels.nodes
+            ?.filter((x) => !settings?.workflows?.some((w) => w.labels.some((l) => x.title === l)))
+            ?.map((x) => (
+              <span
+                style={{
+                  padding: "4px 8px",
+                  marginRight: 4,
+                  borderRadius: 2,
+                  background: x.color,
+                  color: pickTextColorBasedOnBgColorAdvanced(x.color, "#f0f0f0", "black"),
+                }}
+              >
+                {x.title}
+              </span>
+            ))}
+        </div>
+        {!settings && <Loader />}
+        {settings?.workflows?.map((workflow) => (
+          <div>
+            <h2>{workflow.name}</h2>
+            {workflow?.labels?.map((workflowLabel) => {
+              return (
+                <span style={{ marginRight: 4 }}>
+                  <IssueLabelButton
+                    issueId={issueId}
+                    projectPath={projectPath}
+                    label={workflowLabel}
+                    shouldRemoveLabel={(l) =>
+                      l.title !== workflowLabel && workflow.labels.includes(l.title)
+                    }
+                  />
+                </span>
+              );
+            })}
+          </div>
         ))}
         <ReactMarkdown
           plugins={[gfm]}

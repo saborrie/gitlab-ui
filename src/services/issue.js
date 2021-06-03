@@ -1,4 +1,5 @@
 import React from "react";
+import produce from "immer";
 import { useToken } from "./auth";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "react-query";
 import { GraphQLClient, gql } from "graphql-request";
@@ -16,6 +17,20 @@ function useGraphQLClient() {
       },
     });
   }, [token]);
+}
+
+function useMutateQueryState() {
+  const queryClient = useQueryClient();
+
+  return React.useCallback(
+    (key, mutator) => {
+      const previousData = queryClient.getQueryData(key);
+      const newData = produce(previousData, mutator);
+      queryClient.setQueryData(key, newData);
+      return () => queryClient.setQueryData(key, previousData);
+    },
+    [queryClient]
+  );
 }
 
 export function useQueryIssue(id) {
@@ -45,6 +60,7 @@ export function useQueryIssue(id) {
             }
             labels {
               nodes {
+                id
                 color
                 title
                 textColor
@@ -172,7 +188,12 @@ function useUpdateIssueState() {
           stateEvent,
         }
       );
-      return { projectPath, iid, issueId: res.updateIssue?.issue?.id };
+      return {
+        projectPath,
+        iid,
+        state: res.updateIssue?.issue.state,
+        issueId: res.updateIssue?.issue?.id,
+      };
     },
     [graphQLClient]
   );
@@ -180,6 +201,7 @@ function useUpdateIssueState() {
 
 export function useMutationUpdateIssueState() {
   const updateIssueState = useUpdateIssueState();
+  const mutateQueryState = useMutateQueryState();
   const queryClient = useQueryClient();
 
   return useMutation(updateIssueState, {
@@ -202,9 +224,120 @@ export function useMutationUpdateIssueState() {
 
     onError: (err, data, rollback) => rollback(),
 
-    onSettled: (x) => {
-      queryClient.invalidateQueries(["issue", x?.issueId]);
-      queryClient.invalidateQueries(["project", x?.projectPath, "issues"]);
+    onSettled: (data) => {
+      queryClient.invalidateQueries(["issue", data?.issueId]);
+      // queryClient.invalidateQueries(["project", x?.projectPath, "issues"]);
+
+      mutateQueryState(["project", data?.projectPath, "issues"], (issueList) => {
+        const issueToUpdate = issueList.find((i) => i.id === data.issueId);
+        if (issueToUpdate) issueToUpdate.state = data.state;
+      });
+    },
+  });
+}
+
+function useUpdateIssueLabels() {
+  const graphQLClient = useGraphQLClient();
+
+  return React.useCallback(
+    async ({ projectPath, iid, addLabels, removeLabels }) => {
+      function formatLabelId(id) {
+        return Number(id.slice("gid://gitlab/ProjectLabel/".length));
+      }
+
+      const res = await graphQLClient.request(
+        gql`
+          mutation ChangeIssueState(
+            $projectPath: ID!
+            $iid: String!
+            $addLabelIds: [ID!]
+            $removeLabelIds: [ID!]
+          ) {
+            updateIssue(
+              input: {
+                projectPath: $projectPath
+                addLabelIds: $addLabelIds
+                removeLabelIds: $removeLabelIds
+                iid: $iid
+              }
+            ) {
+              issue {
+                id
+                labels {
+                  nodes {
+                    id
+                    color
+                    title
+                    textColor
+                  }
+                }
+              }
+              errors
+            }
+          }
+        `,
+        {
+          projectPath,
+          iid,
+          addLabelIds: addLabels?.map((l) => formatLabelId(l.id)),
+          removeLabelIds: removeLabels?.map((l) => formatLabelId(l.id)),
+        }
+      );
+
+      return {
+        projectPath,
+        iid,
+        issue: res.updateIssue.issue,
+        issueId: res.updateIssue?.issue?.id,
+      };
+    },
+    [graphQLClient]
+  );
+}
+
+export function useMutationUpdateIssueLabels() {
+  const updateIssueLabels = useUpdateIssueLabels();
+  const queryClient = useQueryClient();
+  const mutateQueryState = useMutateQueryState();
+
+  return useMutation(updateIssueLabels, {
+    onMutate: ({ issueId, addLabels, removeLabels }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      queryClient.cancelQueries(["issue", issueId]);
+
+      // Snapshot the previous value
+      const previousIssueData = queryClient.getQueryData(["issue", issueId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["issue", issueId], {
+        ...previousIssueData,
+        labels: {
+          ...previousIssueData.labels,
+          nodes: [...previousIssueData.labels.nodes, ...(addLabels || [])]
+            .filter((l) => !removeLabels.find((rl) => rl.id === l.id))
+            .sort((a, b) => {
+              if (a.title < b.title) return -1;
+              if (b.title < a.title) return 1;
+              return 0;
+            }),
+        },
+      });
+
+      // Return a rollback function
+      return () => queryClient.setQueryData(["issue", issueId], previousIssueData);
+    },
+
+    onError: (err, data, rollback) => rollback(),
+
+    onSettled: (data) => {
+      if (data) {
+        queryClient.invalidateQueries(["issue", data?.issueId]);
+
+        mutateQueryState(["project", data?.projectPath, "issues"], (issueList) => {
+          const issueToUpdate = issueList.find((i) => i.id === data.issue.id);
+          if (issueToUpdate) issueToUpdate.labels = data.issue.labels.nodes;
+        });
+      }
     },
   });
 }

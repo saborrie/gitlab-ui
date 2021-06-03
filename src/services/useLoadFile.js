@@ -21,6 +21,7 @@ export default function useGetProjectFile(projectId, filePath) {
     },
     {
       enabled: Boolean(projectId),
+      staleTime: Infinity,
     }
   );
 }

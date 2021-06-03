@@ -148,7 +148,7 @@ function useReorderIssue() {
         await fetch(`https://gitlab.com/api/v4/projects/${projectId}/issues/${issueIid}`, {
           method: "PUT",
           body: JSON.stringify({
-            milestone_id: milestoneId ? formatMilestoneId(milestoneId) : undefined,
+            milestone_id: milestoneId ? formatMilestoneId(milestoneId) : null,
             labels: labels?.map((l) => l.title) ?? undefined,
           }),
           headers: {
@@ -196,7 +196,7 @@ export function useMutationReorderIssue() {
 
         labels: labels ? labels : newIssueList[index].labels,
 
-        milestone: milestoneId ? { id: milestoneId } : newIssueList[index].milestone,
+        milestone: milestoneId ? { id: milestoneId } : null, // newIssueList[index].milestone,
 
         isSaving: true,
       };
