@@ -264,6 +264,10 @@ export function useQueryGraphProjectLatestTodo(id) {
                 }
                 nodes {
                   createdAt
+                  body
+                  author {
+                    name
+                  }
                 }
               }
             }
@@ -278,6 +282,7 @@ export function useQueryGraphProjectLatestTodo(id) {
   return useQuery(["project-latest-todo", id], execute, {
     enabled: Boolean(graphQLClient) && Boolean(id),
     refetchInterval: 30 * 1000,
+    refetchIntervalInBackground: true,
   });
 }
 

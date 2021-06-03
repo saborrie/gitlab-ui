@@ -507,22 +507,6 @@ function ProjectPage() {
               {/* <Mice projectPath={projectPath} /> */}
             </Board.Root>
           </DragDropContext>
-          {todoIssues?.length > 0 && (
-            <FloatingFooter>
-              {todoIssues?.map((t) => (
-                <FloatingFooterPill
-                  selected={t.id === selectedIssueId}
-                  onClick={() => {
-                    history.replace({
-                      search: queryString.stringify({ ticket: t.id }),
-                    });
-                  }}
-                >
-                  #{t.iid}
-                </FloatingFooterPill>
-              ))}
-            </FloatingFooter>
-          )}
         </Layout.ContentArea>
         <Drawer show={isListMode || Boolean(selectedIssueId)} onFrame={scrollSelectedIssueIntoView}>
           {selectedIssueId ? (
@@ -547,6 +531,22 @@ function ProjectPage() {
           ) : null}
         </Drawer>
       </Layout.Content>
+      {todoIssues?.length > 0 && (
+        <FloatingFooter>
+          {todoIssues?.map((t) => (
+            <FloatingFooterPill
+              selected={t.id === selectedIssueId}
+              onClick={() => {
+                history.replace({
+                  search: queryString.stringify({ ticket: t.id }),
+                });
+              }}
+            >
+              #{t.iid}
+            </FloatingFooterPill>
+          ))}
+        </FloatingFooter>
+      )}
     </Layout.Root>
   );
 }

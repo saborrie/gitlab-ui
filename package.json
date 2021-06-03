@@ -13,6 +13,7 @@
     "immer": "^9.0.2",
     "luxon": "^1.26.0",
     "parse-link-header": "^1.0.1",
+    "push.js": "^1.0.12",
     "query-string": "^6.13.8",
     "react": "^16.13.1",
     "react-beautiful-dnd": "^13.0.0",

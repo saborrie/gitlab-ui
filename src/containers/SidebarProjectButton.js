@@ -4,6 +4,7 @@ import { useQueryGraphProjectLatestTodo, useQueryGraphProjectLink } from "../ser
 import { useLastTodoDate, useSetLastTodoDate } from "../services/storage";
 import { DateTime } from "luxon";
 import { usePlayNotification } from "../services/notification";
+import Push from "push.js";
 
 function SidebarProjectButton({ fullPath }) {
   const projectQuery = useQueryGraphProjectLink(fullPath);
@@ -26,6 +27,10 @@ function SidebarProjectButton({ fullPath }) {
       if (newTodoDateTime > lastTodoDateTime || !Boolean(lastTodoDate)) {
         play();
         setLastTodoDate(fullPath, newTodoDate);
+        Push.create(todosQuery.data?.nodes?.[0].body, {
+          body: todosQuery.data?.nodes?.[0].author?.name,
+          icon: "logo512.png",
+        });
       }
     }
   }, [todosQuery.dataUpdatedAt, lastTodoDate]);

@@ -3,16 +3,19 @@ import React from "react";
 import { createUseStyles } from "react-jss";
 const useStyles = createUseStyles({
   root: {
+    // background: "white",
     position: "sticky",
-    bottom: 16,
-    left: 80,
-    marginLeft: 100,
-    maxWidth: "calc(100% - 200px)",
-    display: "inline-flex",
+    // bottom: 16,
+    // left: 80,
+    // marginLeft: 100,
+    // maxWidth: "calc(100% - 200px)",
+    display: "flex",
     alignItems: "center",
     padding: "8px 16px 0",
-    borderRadius: "8px",
-    // background: "#1c1d21",
+    // borderRadius: "8px",
+    zIndex: 5,
+    background: "#2a2c32",
+    boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.4)",
 
     "&::before": {
       content: '""',
