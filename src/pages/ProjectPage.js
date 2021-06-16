@@ -214,14 +214,21 @@ function useBoard(projectPath, { isListMode }) {
               ?.sort((a, b) => a.relativePosition - b.relativePosition)
               ?.filter((i) => {
                 const matchesMilestone = i.milestone?.id === milestone?.id;
-                const matchesLabel = label
-                  ? i.labels.findIndex((l) => l.title === label?.title) !== -1
-                  : !Boolean(i.labels?.length) ||
-                    labels.findIndex(
-                      (l) => i.labels.findIndex((il) => il.title === l.title) === -1
-                    ) === -1;
 
-                return matchesMilestone && matchesLabel;
+                const isNoLabelColumn = !Boolean(label);
+
+                const matchesLabelColumn =
+                  !isNoLabelColumn && i.labels.findIndex((l) => l.title === label?.title) !== -1;
+
+                const matchesNoLabelColumns =
+                  i.labels.findIndex(
+                    (l) => labels.findIndex((sl) => sl.title === l.title) !== -1
+                  ) === -1;
+
+                return (
+                  matchesMilestone &&
+                  (isListMode || matchesLabelColumn || (isNoLabelColumn && matchesNoLabelColumns))
+                );
               }),
           })
       )
