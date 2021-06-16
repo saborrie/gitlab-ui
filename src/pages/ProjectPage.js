@@ -34,6 +34,15 @@ import NewTicketButton from "../components/NewTicketButton";
 import SystemIcons from "../components/SystemIcons";
 import useLoadSettings from "../services/useLoadSettings";
 import PillButton from "../components/PillButton";
+import NumberIndicatorCircle from "../components/NumberIndicatorCircle";
+
+function getStoryPoints(title) {
+  return title?.match(/\[([0-9]*)\]/)?.[1];
+}
+
+function stripStoryPoints(title) {
+  return title?.replace(/\[([0-9]*)\]/, "").trim();
+}
 
 function Column({
   id,
@@ -56,7 +65,7 @@ function Column({
                   <>
                     <Ticket.Info>
                       <span style={{ width: 80, fontSize: 16 }}>{t.reference}</span>
-                      <span style={{ fontSize: 16 }}>{t.title}</span>
+                      <span style={{ fontSize: 16 }}>{stripStoryPoints(t.title)}</span>
                       <Ticket.Spacer />
 
                       {t.labels?.map((x) => (
@@ -73,7 +82,13 @@ function Column({
                         </span>
                       ))}
 
-                      <span style={{ width: 40, display: "flex", justifyContent: "flex-end" }}>
+                      <span style={{ width: 30, display: "flex", justifyContent: "flex-end" }}>
+                        {getStoryPoints(t.title) ? (
+                          <NumberIndicatorCircle>{getStoryPoints(t.title)}</NumberIndicatorCircle>
+                        ) : null}
+                      </span>
+
+                      <span style={{ width: 30, display: "flex", justifyContent: "flex-end" }}>
                         {t.assignees?.nodes?.map((n) => (
                           <Avatar url={`https://gitlab.com${n.avatarUrl}`} />
                         ))}
@@ -83,7 +98,7 @@ function Column({
                 ) : (
                   <>
                     <Ticket.Content>
-                      {t.title}
+                      {stripStoryPoints(t.title)}
                       <br />
                       <br />
                       <small>
@@ -112,9 +127,16 @@ function Column({
                     <Ticket.Info>
                       {t.reference} {t.isSaving && <span>saving...</span>}
                       <Ticket.Spacer />
-                      {t.assignees?.nodes?.map((n) => (
-                        <Avatar url={`https://gitlab.com${n.avatarUrl}`} />
-                      ))}
+                      <span style={{ width: 30, display: "flex", justifyContent: "flex-end" }}>
+                        {getStoryPoints(t.title) ? (
+                          <NumberIndicatorCircle>{getStoryPoints(t.title)}</NumberIndicatorCircle>
+                        ) : null}
+                      </span>
+                      <span style={{ width: 30, display: "flex", justifyContent: "flex-end" }}>
+                        {t.assignees?.nodes?.map((n) => (
+                          <Avatar url={`https://gitlab.com${n.avatarUrl}`} />
+                        ))}
+                      </span>
                     </Ticket.Info>
                   </>
                 );

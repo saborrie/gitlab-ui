@@ -25,6 +25,9 @@ const useStyles = createUseStyles({
   spacer: {
     flexGrow: 1,
   },
+  smallSpacer: {
+    width: 10,
+  },
   ticketInfo: {
     color: "#f0f0f0",
     flexShrink: 0,
@@ -120,6 +123,16 @@ Ticket.Spacer = function TicketSpacer({ children, ...rest }) {
 
   return (
     <div className={classes.spacer} {...rest}>
+      {children}
+    </div>
+  );
+};
+
+Ticket.SmallSpacer = function TicketSpacer({ children, ...rest }) {
+  const classes = useStyles();
+
+  return (
+    <div className={classes.smallSpacer} {...rest}>
       {children}
     </div>
   );
