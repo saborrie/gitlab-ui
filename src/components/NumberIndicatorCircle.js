@@ -12,7 +12,7 @@ const useStyles = createUseStyles({
     background: "#131316",
     // boxShadow: "0 0 10px -5px rgba(0, 0, 0, 0.8)",
     overflow: "hidden",
-    display: "flex",
+    display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: 16,

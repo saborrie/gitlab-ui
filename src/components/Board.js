@@ -28,6 +28,9 @@ const useStyles = createUseStyles({
     fallbacks: {
       position: "-webkit-sticky",
     },
+
+    display: "flex",
+    alignItems: "center",
   },
   cell: {
     width: 280,

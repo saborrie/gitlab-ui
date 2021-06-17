@@ -35,9 +35,15 @@ import SystemIcons from "../components/SystemIcons";
 import useLoadSettings from "../services/useLoadSettings";
 import PillButton from "../components/PillButton";
 import NumberIndicatorCircle from "../components/NumberIndicatorCircle";
+import ProgressBar from "../components/ProgressBar";
 
 function getStoryPoints(title) {
-  return title?.match(/\[([0-9]*)\]/)?.[1];
+  const points = Number(title?.match(/\[([0-9]*)\]/)?.[1]);
+  // NaN and 0 are both falsey
+  if (!points) {
+    return null;
+  }
+  return points;
 }
 
 function stripStoryPoints(title) {
@@ -213,6 +219,12 @@ function useBoard(projectPath, { isListMode }) {
         }) `.padEnd(56),
         id: milestone.id,
         state: milestone.state,
+        totalPoints: [...graphIssues?.data]
+          .filter((i) => i.milestone?.id === milestone?.id)
+          .reduce((total, i) => total + (getStoryPoints(i.title) ?? 0), 0),
+        closedPoints: [...graphIssues?.data]
+          .filter((i) => i.milestone?.id === milestone?.id && i.state === "closed")
+          .reduce((total, i) => total + (getStoryPoints(i.title) ?? 0), 0),
         milestone,
         cells: columns.map((c) => ({ id: milestone.id + c.id, label: c.label, milestone })),
       })),
@@ -226,34 +238,32 @@ function useBoard(projectPath, { isListMode }) {
     const cells = {};
 
     rows.forEach((row) =>
-      row.cells.forEach(
-        ({ id, milestone, label }) =>
-          (cells[id] = {
-            id,
-            milestone,
-            label,
-            issues: [...graphIssues?.data]
-              ?.sort((a, b) => a.relativePosition - b.relativePosition)
-              ?.filter((i) => {
-                const matchesMilestone = i.milestone?.id === milestone?.id;
+      row.cells.forEach(({ id, milestone, label }) => {
+        cells[id] = {
+          id,
+          milestone,
+          label,
+          issues: [...graphIssues?.data]
+            ?.sort((a, b) => a.relativePosition - b.relativePosition)
+            ?.filter((i) => {
+              const matchesMilestone = i.milestone?.id === milestone?.id;
 
-                const isNoLabelColumn = !Boolean(label);
+              const isNoLabelColumn = !Boolean(label);
 
-                const matchesLabelColumn =
-                  !isNoLabelColumn && i.labels.findIndex((l) => l.title === label?.title) !== -1;
+              const matchesLabelColumn =
+                !isNoLabelColumn && i.labels.findIndex((l) => l.title === label?.title) !== -1;
 
-                const matchesNoLabelColumns =
-                  i.labels.findIndex(
-                    (l) => labels.findIndex((sl) => sl.title === l.title) !== -1
-                  ) === -1;
+              const matchesNoLabelColumns =
+                i.labels.findIndex((l) => labels.findIndex((sl) => sl.title === l.title) !== -1) ===
+                -1;
 
-                return (
-                  matchesMilestone &&
-                  (isListMode || matchesLabelColumn || (isNoLabelColumn && matchesNoLabelColumns))
-                );
-              }),
-          })
-      )
+              return (
+                matchesMilestone &&
+                (isListMode || matchesLabelColumn || (isNoLabelColumn && matchesNoLabelColumns))
+              );
+            }),
+        };
+      })
     );
 
     const todoIssues = graphIssues?.data.filter((i) => i.currentUserTodos?.nodes?.length > 0);
@@ -465,12 +475,19 @@ function ProjectPage() {
                       }}
                     >
                       <span
-                        style={{ opacity: row.state === "closed" ? 0.4 : 1, whiteSpace: "pre" }}
+                        style={{
+                          opacity: row.state === "closed" ? 0.4 : 1,
+                          whiteSpace: "pre",
+                          minWidth: 600,
+                        }}
                       >
                         {row.name}
                         {/* {row.cells.reduce((totals, cell) => totals c.length).length} issues */}
                         {row.state === "closed" ? "        Closed" : null}
                       </span>
+                      {row.milestone && (
+                        <ProgressBar total={row.totalPoints} value={row.closedPoints} />
+                      )}
                     </Board.RowHeader>
                     {!collapsedRows?.includes(row.id) && (
                       <Board.Row>
