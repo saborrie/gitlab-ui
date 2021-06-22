@@ -55,7 +55,10 @@ function IssueDetailsContainer({ issueId, projectPath, projectId }) {
       <DrawerSection>
         <h1>{issueQuery.data?.title}</h1>
         <small>
-          <a href={`https://gitlab.com/${projectPath}/-/issues/${issueQuery.data?.iid}`}>
+          <a
+            href={`https://gitlab.com/${projectPath}/-/issues/${issueQuery.data?.iid}`}
+            targer="_blank"
+          >
             {issueQuery.data?.reference}
           </a>
         </small>
