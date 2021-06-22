@@ -26,17 +26,17 @@ const useStyles = createUseStyles({
 function Drawer({ show, onShow, onFrame, children }) {
   const classes = useStyles();
 
-  const cachedChildren = React.useRef(children);
-
-  React.useEffect(() => {
-    if (show) cachedChildren.current = children;
-  }, [show, children]);
-
-  const props = useSpring({
-    config: { ...config.stiff, clamp: true, velocity: 100 },
-    width: show ? 680 : 0,
+  const styles = useSpring({
     from: { width: 0 },
-    onFrame: () => {
+    to: { width: show ? 680 : 0 },
+    reverse: !show,
+    config: {
+      mass: 1,
+      tension: 210,
+      friction: 20,
+      clamp: true,
+    },
+    onChange: () => {
       void onFrame?.();
     },
     onRest: () => {
@@ -45,11 +45,8 @@ function Drawer({ show, onShow, onFrame, children }) {
   });
 
   return (
-    <animated.div style={{ width: props.width }} className={classes.root}>
-      <div className={classes.inner}>
-        {children}
-        {/* {show ? children : cachedChildren.current} */}
-      </div>
+    <animated.div style={{ width: styles.width }} className={classes.root}>
+      <div className={classes.inner}>{children}</div>
     </animated.div>
   );
 }
