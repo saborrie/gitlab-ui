@@ -57,7 +57,7 @@ function IssueDetailsContainer({ issueId, projectPath, projectId }) {
         <small>
           <a
             href={`https://gitlab.com/${projectPath}/-/issues/${issueQuery.data?.iid}`}
-            targer="_blank"
+            target="_blank"
           >
             {issueQuery.data?.reference}
           </a>
