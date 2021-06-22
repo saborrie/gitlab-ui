@@ -400,3 +400,89 @@ export function useMutationCreateIssue() {
     },
   });
 }
+
+function useUpdateIssueTitleAndDescription() {
+  const graphQLClient = useGraphQLClient();
+
+  return React.useCallback(
+    async ({ projectPath, iid, title, description }) => {
+      const res = await graphQLClient.request(
+        gql`
+          mutation ChangeIssueState(
+            $projectPath: ID!
+            $iid: String!
+            $title: String
+            $description: String
+          ) {
+            updateIssue(
+              input: {
+                projectPath: $projectPath
+                title: $title
+                description: $description
+                iid: $iid
+              }
+            ) {
+              issue {
+                id
+                title
+                description
+              }
+            }
+          }
+        `,
+        {
+          projectPath,
+          iid,
+          title,
+          description,
+        }
+      );
+      return {
+        projectPath,
+        iid,
+        title: res.updateIssue?.issue.title,
+        description: res.updateIssue?.issue.description,
+        issueId: res.updateIssue?.issue?.id,
+      };
+    },
+    [graphQLClient]
+  );
+}
+
+export function useMutationUpdateIssueAndDescription() {
+  const updateIssueState = useUpdateIssueTitleAndDescription();
+  const mutateQueryState = useMutateQueryState();
+  const queryClient = useQueryClient();
+
+  return useMutation(updateIssueState, {
+    onMutate: ({ issueId, title, description }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      queryClient.cancelQueries(["issue", issueId]);
+
+      // Snapshot the previous value
+      const previousIssueData = queryClient.getQueryData(["issue", issueId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["issue", issueId], {
+        ...previousIssueData,
+        title,
+        description,
+      });
+
+      // Return a rollback function
+      return () => queryClient.setQueryData(["issue", issueId], previousIssueData);
+    },
+
+    onError: (err, data, rollback) => rollback(),
+
+    onSettled: (data) => {
+      queryClient.invalidateQueries(["issue", data?.issueId]);
+      // queryClient.invalidateQueries(["project", x?.projectPath, "issues"]);
+
+      mutateQueryState(["project", data?.projectPath, "issues"], (issueList) => {
+        const issueToUpdate = issueList?.find((i) => i.id === data.issueId);
+        if (issueToUpdate) issueToUpdate.title = data.title;
+      });
+    },
+  });
+}

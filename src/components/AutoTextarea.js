@@ -11,6 +11,14 @@ const AutoTextArea = (props) => {
     setTextAreaHeight(`${textAreaRef.current.scrollHeight}px`);
   }, [text]);
 
+  useEffect(() => {
+    if (props.value !== text) {
+      setTextAreaHeight("auto");
+      setParentHeight(`${textAreaRef.current.scrollHeight}px`);
+      setText(props.value);
+    }
+  }, [props.value]);
+
   const onChangeHandler = (event) => {
     setTextAreaHeight("auto");
     setParentHeight(`${textAreaRef.current.scrollHeight}px`);
