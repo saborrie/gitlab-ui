@@ -136,7 +136,7 @@ function useReorderIssue() {
         });
       }
 
-      if (milestoneId || labels) {
+      if (labels) {
         // const milestone_id = milestoneBefore || milestoneAfter ? milestoneAfter?.id : undefined;
         // const labels =
         //   labelBefore || labelAfter
